@@ -1,4 +1,4 @@
-# Restaurante Elegance
+# Proyecto Restaurante Mikel y Alba
 
 Este es un proyecto web para un restaurante, desarrollado bajo la arquitectura MVC (Modelo-Vista-Controlador) utilizando el framework **ASP.NET Core** con **.NET 8**.
 
