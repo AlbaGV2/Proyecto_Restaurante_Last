@@ -1,0 +1,49 @@
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+}
+
+<!-- Imagen lateral -->
+        <div class="w-full md:w-1/2 h-[40vh] md:h-auto relative animate-on-scroll border-r border-[#eaddce]/30">
+            <img src="https://images.unsplash.com/photo-1544148103-0773bf10d330?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Detalle restaurante" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/50"></div>
+            <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-8 z-10 animate-on-scroll" data-delay="0.2s">
+                <h1 class="font-serif text-3xl md:text-5xl text-white font-bold tracking-wider mb-6">Bienvenido</h1>
+                <div class="w-16 h-0.5 bg-primary mx-auto mb-6"></div>
+                <p class="text-white/90 font-light tracking-widest uppercase text-xs md:text-sm">Inicia sesión para continuar</p>
+            </div>
+        </div>
+
+        <!-- Formulario Login -->
+        <div class="w-full md:w-1/2 flex items-center justify-center p-8 md:p-16 bg-white shrink-0 relative overflow-hidden">
+            <div class="absolute -top-[20%] -right-[20%] w-[60%] h-[60%] bg-secondary rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+
+            <div class="w-full max-w-sm animate-on-scroll relative z-10" data-delay="0.3s">
+                <div class="mb-12">
+                    <h2 class="font-serif text-3xl font-bold text-dark mb-4">Acceso</h2>
+                    <p class="text-gray-500 font-light text-sm">Por favor, introduce tus credenciales para confirmar tu reserva.</p>
+                </div>
+
+                <form class="flex flex-col gap-8" onsubmit="return false;">
+                    <div class="relative">
+                        <input type="text" id="username" placeholder=" " class="w-full bg-transparent border-b-2 border-gray-200 focus:border-primary text-dark outline-none py-2 text-base transition-colors duration-300 peer font-serif" />
+                        <label for="username" class="absolute left-0 top-2 text-gray-400 text-base transition-all duration-300 pointer-events-none uppercase tracking-widest text-xs font-bold peer-focus:-translate-y-6 peer-focus:text-primary peer-focus:text-xs peer-not-placeholder-shown:-translate-y-6 peer-not-placeholder-shown:text-xs">Usuario</label>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="password" placeholder=" " class="w-full bg-transparent border-b-2 border-gray-200 focus:border-primary text-dark outline-none py-2 text-base transition-colors duration-300 peer font-serif" />
+                        <label for="password" class="absolute left-0 top-2 text-gray-400 text-base transition-all duration-300 pointer-events-none uppercase tracking-widest text-xs font-bold peer-focus:-translate-y-6 peer-focus:text-primary peer-focus:text-xs peer-not-placeholder-shown:-translate-y-6 peer-not-placeholder-shown:text-xs">Contraseña</label>
+                    </div>
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-2">
+                        <a href="#" class="text-[10px] text-gray-400 hover:text-primary transition-colors tracking-widest uppercase font-semibold">¿Olvidaste la contraseña?</a>
+                        <a href="Registro.html" class="text-[10px] text-primary hover:text-dark transition-colors tracking-widest uppercase font-bold underline underline-offset-4">Regístrate</a>
+                    </div>
+                    <div class="mt-6">
+                        <button type="button" id="btn-login" class="w-full bg-dark text-white px-8 py-4 rounded-full text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 shadow-xl hover:bg-primary hover:-translate-y-1 transform">
+                            Entrar y Confirmar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+@section Scripts {
+    <script type="module" src="~/js/controllers/AuthController.js"></script>
+}

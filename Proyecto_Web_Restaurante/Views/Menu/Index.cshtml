@@ -1,0 +1,37 @@
+@{
+    ViewData["Title"] = "Menú";
+}
+
+<!-- Hero -->
+        <div class="w-full h-[50vh] md:h-[65vh] relative animate-on-scroll">
+            <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" alt="Platos Gourmet" class="w-full h-full object-cover" />
+            <div class="absolute inset-0 bg-black/50"></div>
+            <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4 animate-on-scroll" data-delay="0.2s">
+                <h1 class="font-serif text-3xl md:text-5xl text-white font-bold tracking-wider mb-6">Nuestra Carta</h1>
+                <div class="w-16 h-0.5 bg-primary mx-auto mb-6"></div>
+                <p class="text-white/90 font-light tracking-widest uppercase text-xs md:text-sm">Sabores que inspiran</p>
+            </div>
+        </div>
+
+        <!-- Sección de Menú -->
+        <div id="menu" class="bg-secondary px-4 md:px-10 py-24">
+            <div class="max-w-[1000px] mx-auto">
+                <div class="text-center mb-16 animate-on-scroll">
+                    <h2 class="font-serif text-3xl md:text-4xl font-bold text-dark mb-6">Nuestra Oferta Gastronómica</h2>
+                    <div class="w-16 h-0.5 bg-primary mx-auto mb-8"></div>
+                    <p class="text-gray-500 font-light text-sm md:text-base">Descubra una cuidada selección de platos diseñados para deleitar todos los paladares.</p>
+                </div>
+
+                <!-- Menú del Día — renderizado por MenuController.js -->
+                <div id="menu-dia" class="mb-20 animate-on-scroll" data-delay="0.1s"></div>
+
+                <!-- Clásicos Informales -->
+                <div id="menu-clasicos" class="mb-20 animate-on-scroll" data-delay="0.2s"></div>
+
+                <!-- A la Carta -->
+                <div id="menu-carta" class="animate-on-scroll" data-delay="0.3s"></div>
+            </div>
+        </div>
+@section Scripts {
+    <script type="module" src="~/js/controllers/MenuController.js"></script>
+}
