@@ -114,15 +114,119 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- Nombre ---
+  const nombreInput = document.getElementById('nombre');
+  const errorNombre = document.getElementById('error-nombre');
+  if (nombreInput) {
+    nombreInput.addEventListener('input', () => {
+      ReservaModel.actualizar('nombre', nombreInput.value);
+      actualizarBoton();
+    });
+  }
+
+  // --- Email ---
+  const emailInput = document.getElementById('email');
+  const errorEmail = document.getElementById('error-email');
+  if (emailInput) {
+    emailInput.addEventListener('input', () => {
+      ReservaModel.actualizar('email', emailInput.value);
+      actualizarBoton();
+    });
+  }
+
+  // Activa/desactiva el botón Reservar según validez del modelo
+  function actualizarBoton() {
+    if (!btnReservar) return;
+    if (ReservaModel.esValida()) {
+      btnReservar.dataset.active = 'true';
+    } else {
+      btnReservar.dataset.active = 'false';
+    }
+  }
+
   // --- Botón Reservar ---
+  const mensajeDiv = document.getElementById('mensaje-reserva');
+
+  function mostrarMensaje(texto, esExito) {
+    if (!mensajeDiv) return;
+    mensajeDiv.textContent = texto;
+    mensajeDiv.className = esExito
+      ? 'text-center mb-8 px-4 py-3 rounded-2xl text-sm font-medium bg-green-50 text-green-700 border border-green-200'
+      : 'text-center mb-8 px-4 py-3 rounded-2xl text-sm font-medium bg-red-50 text-red-700 border border-red-200';
+  }
+
+  function limpiarErrores() {
+    if (errorNombre) { errorNombre.textContent = ''; errorNombre.classList.add('hidden'); }
+    if (errorEmail)  { errorEmail.textContent  = ''; errorEmail.classList.add('hidden'); }
+    if (mensajeDiv)  { mensajeDiv.className = 'hidden'; mensajeDiv.textContent = ''; }
+  }
+
   if (btnReservar) {
-    btnReservar.addEventListener('click', () => {
-      if (ReservaModel.esValida()) {
-        ReservaModel.guardar();
-        window.location.href = '../Auth//Auth/Login';
+    btnReservar.addEventListener('click', async () => {
+      if (!ReservaModel.esValida()) return;
+
+      limpiarErrores();
+      btnReservar.textContent = 'Enviando...';
+      btnReservar.disabled = true;
+
+      const { personas, fecha, turno, hora, nombre, email } = ReservaModel.estado;
+
+      // Obtener el token CSRF generado por ASP.NET Core
+      const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+      try {
+        const respuesta = await fetch('/Reservas/Crear', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': token
+          },
+          body: JSON.stringify({
+            nombre,
+            email,
+            fecha,
+            personas: parseInt(personas, 10),
+            turno,
+            hora
+          })
+        });
+
+        const datos = await respuesta.json();
+
+        if (respuesta.ok && datos.success) {
+          // Éxito: mostrar mensaje de confirmación y limpiar formulario
+          mostrarMensaje(datos.mensaje, true);
+          ReservaModel.limpiar();
+          if (nombreInput) nombreInput.value = '';
+          if (emailInput)  emailInput.value  = '';
+          btnReservar.dataset.active = 'false';
+        } else {
+          // Error del servidor: mostrar errores por campo
+          mostrarMensaje('Por favor, revisa los datos del formulario.', false);
+
+          if (datos.errores) {
+            if (datos.errores.Nombre && errorNombre) {
+              errorNombre.textContent = datos.errores.Nombre[0];
+              errorNombre.classList.remove('hidden');
+            }
+            if (datos.errores.Email && errorEmail) {
+              errorEmail.textContent = datos.errores.Email[0];
+              errorEmail.classList.remove('hidden');
+            }
+            // Otros errores (Fecha, Hora, etc.) se muestran en el mensaje general
+            const otrosErrores = Object.entries(datos.errores)
+              .filter(([k]) => k !== 'Nombre' && k !== 'Email')
+              .map(([, v]) => v[0])
+              .join(' ');
+            if (otrosErrores) mostrarMensaje(otrosErrores, false);
+          }
+        }
+      } catch (err) {
+        mostrarMensaje('Error de conexión. Por favor, inténtalo de nuevo.', false);
+      } finally {
+        btnReservar.textContent = 'Reservar';
+        btnReservar.disabled = false;
       }
     });
   }
 });
-
-
