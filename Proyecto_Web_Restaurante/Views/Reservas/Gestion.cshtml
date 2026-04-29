@@ -1,0 +1,137 @@
+@model Restaurante.Models.ReservasGestionViewModel
+@{
+    ViewData["Title"] = "Gestión de Reservas";
+}
+
+<!-- Hero -->
+<div class="w-full h-[40vh] relative animate-on-scroll">
+    <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" alt="Gestión" class="w-full h-full object-cover" />
+    <div class="absolute inset-0 bg-black/60"></div>
+    <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
+        <h1 class="font-serif text-3xl md:text-4xl text-white font-bold tracking-wider mb-6">Gestor de Reservas</h1>
+        <div class="w-16 h-0.5 bg-primary mx-auto mb-6"></div>
+        <p class="text-white/80 font-light tracking-widest uppercase text-sm">Administración de clientes y mesas</p>
+    </div>
+</div>
+
+<!-- Listado de Reservas -->
+<div class="px-4 md:px-10 py-24 bg-secondary/30 min-h-[60vh]">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-12">
+            <h2 class="font-serif text-2xl font-bold text-dark">Historial de Reservas</h2>
+            <a asp-action="Index" class="text-xs font-bold tracking-widest uppercase text-primary hover:text-dark transition-colors">
+                ← Volver al formulario
+            </a>
+        </div>
+
+        <div class="bg-white rounded-[30px] shadow-sm border border-[#eaddce]/50 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-dark text-white uppercase text-[10px] tracking-[0.2em] font-bold">
+                            <th class="px-8 py-6">
+                                <a asp-action="Gestion" asp-route-sortOrder="@ViewData["IdSortParm"]" class="hover:text-primary transition-colors flex items-center gap-2">
+                                    ID Reserva
+                                    @if ((string)ViewData["CurrentSort"] == "Id") { <span>↑</span> }
+                                    else if ((string)ViewData["CurrentSort"] == "id_desc") { <span>↓</span> }
+                                </a>
+                            </th>
+                            <th class="px-8 py-6">
+                                <a asp-action="Gestion" asp-route-sortOrder="@ViewData["DateSortParm"]" class="hover:text-primary transition-colors flex items-center gap-2">
+                                    Fecha
+                                    @if (string.IsNullOrEmpty((string)ViewData["CurrentSort"])) { <span>↓</span> }
+                                    else if ((string)ViewData["CurrentSort"] == "date_asc") { <span>↑</span> }
+                                </a>
+                            </th>
+                            <th class="px-8 py-6">Hora</th>
+                            <th class="px-8 py-6">
+                                <a asp-action="Gestion" asp-route-sortOrder="@ViewData["NameSortParm"]" class="hover:text-primary transition-colors flex items-center gap-2">
+                                    Cliente
+                                    @if ((string)ViewData["CurrentSort"] == "Name") { <span>↑</span> }
+                                    else if ((string)ViewData["CurrentSort"] == "name_desc") { <span>↓</span> }
+                                </a>
+                            </th>
+                            <th class="px-8 py-6">Email</th>
+                            <th class="px-8 py-6 text-center">
+                                <a asp-action="Gestion" asp-route-sortOrder="@ViewData["PersonSortParm"]" class="hover:text-primary transition-colors inline-flex items-center gap-2">
+                                    Personas
+                                    @if ((string)ViewData["CurrentSort"] == "Personas") { <span>↑</span> }
+                                    else if ((string)ViewData["CurrentSort"] == "person_desc") { <span>↓</span> }
+                                </a>
+                            </th>
+                            <th class="px-8 py-6 text-center">Turno</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-dark/80">
+                        @if (Model.Reservas.Any())
+                        {
+                            foreach (var reserva in Model.Reservas)
+                            {
+                                <tr class="border-b border-gray-100 hover:bg-secondary/20 transition-colors">
+                                    <td class="px-8 py-5 font-bold text-primary">@reserva.IdReserva</td>
+                                    <td class="px-8 py-5 font-medium">@reserva.Fecha.ToString("dd/MM/yyyy")</td>
+                                    <td class="px-8 py-5">@reserva.Hora</td>
+                                    <td class="px-8 py-5 font-bold text-dark">@reserva.Nombre</td>
+                                    <td class="px-8 py-5 text-sm">@reserva.Email</td>
+                                    <td class="px-8 py-5 text-center font-bold">@reserva.Personas</td>
+                                    <td class="px-8 py-5 text-center">
+                                        <span class="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest @(reserva.Turno.ToLower() == "comida" ? "bg-orange-100 text-orange-600" : "bg-blue-100 text-blue-600")">
+                                            @reserva.Turno
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="px-8 py-20 text-center text-gray-400 italic">
+                                    No hay reservas registradas actualmente.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            @if (Model.TotalPaginas > 1)
+            {
+                <div class="bg-gray-50/50 px-8 py-6 flex justify-between items-center border-t border-gray-100">
+                    <div class="text-[10px] uppercase tracking-widest font-bold text-gray-400">
+                        Página @Model.PaginaActual de @Model.TotalPaginas
+                    </div>
+                    <div class="flex gap-2">
+                        @if (Model.TienePaginaAnterior)
+                        {
+                            <a asp-action="Gestion" asp-route-pagina="@(Model.PaginaActual - 1)" asp-route-sortOrder="@Model.SortOrder"
+                               class="bg-white border border-gray-200 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-dark hover:text-white transition-all shadow-sm">
+                                Anterior
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="bg-gray-100 text-gray-300 border border-gray-200 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest cursor-not-allowed">
+                                Anterior
+                            </span>
+                        }
+
+                        @if (Model.TienePaginaSiguiente)
+                        {
+                            <a asp-action="Gestion" asp-route-pagina="@(Model.PaginaActual + 1)" asp-route-sortOrder="@Model.SortOrder"
+                               class="bg-white border border-gray-200 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-dark hover:text-white transition-all shadow-sm">
+                                Siguiente
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="bg-gray-100 text-gray-300 border border-gray-200 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest cursor-not-allowed">
+                                Siguiente
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

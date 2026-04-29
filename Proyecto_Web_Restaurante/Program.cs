@@ -10,6 +10,9 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<RestauranteContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Configurar Antiforgery para que acepte el token desde la cabecera (Header) para peticiones AJAX/JSON
+builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
+
 var app = builder.Build();
 
 // Configurar el pipeline HTTP

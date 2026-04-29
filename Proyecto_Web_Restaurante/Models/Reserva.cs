@@ -28,4 +28,7 @@ public class Reserva
     // Hora seleccionada por el usuario, ej: "14:00", "21:30"
     [Required(ErrorMessage = "La hora es obligatoria.")]
     public string Hora { get; set; } = string.Empty;
+
+    // Código identificativo de la reserva, ej: RES-X78Y
+    public string IdReserva { get; set; } = string.Empty;
 }
