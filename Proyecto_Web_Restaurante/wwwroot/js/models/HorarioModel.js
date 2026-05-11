@@ -15,12 +15,12 @@ export const horarioRestaurante = {
 export const slotsComida = [
   { hora: '13:00', disponible: true },
   { hora: '13:15', disponible: true },
-  { hora: '13:30', disponible: false },
+  { hora: '13:30', disponible: true },
   { hora: '13:45', disponible: true },
   { hora: '14:00', disponible: true },
   { hora: '14:15', disponible: true },
   { hora: '14:30', disponible: true },
-  { hora: '14:45', disponible: false },
+  { hora: '14:45', disponible: true },
   { hora: '15:00', disponible: true },
   { hora: '15:15', disponible: true },
   { hora: '15:30', disponible: true },
@@ -31,14 +31,14 @@ export const slotsComida = [
 export const slotsCena = [
   { hora: '20:00', disponible: true },
   { hora: '20:15', disponible: true },
-  { hora: '20:30', disponible: false },
+  { hora: '20:30', disponible: true },
   { hora: '20:45', disponible: true },
   { hora: '21:00', disponible: true },
   { hora: '21:15', disponible: true },
   { hora: '21:30', disponible: true },
   { hora: '21:45', disponible: true },
   { hora: '22:00', disponible: true },
-  { hora: '22:15', disponible: false },
+  { hora: '22:15', disponible: true },
   { hora: '22:30', disponible: true },
   { hora: '22:45', disponible: true }
 ];

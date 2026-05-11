@@ -18,7 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
     dateInput.value = today;
     dateInput.min   = today;
     ReservaModel.actualizar('fecha', today);
-    dateInput.addEventListener('change', () => ReservaModel.actualizar('fecha', dateInput.value));
+    dateInput.addEventListener('change', () => {
+      ReservaModel.actualizar('fecha', dateInput.value);
+      actualizarHorasDisponibles(dateInput.value);
+    });
   }
 
   // --- Personas ---
@@ -43,8 +46,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const gridComidas = document.getElementById('grid-comidas');
   const gridCenas   = document.getElementById('grid-cenas');
-  if (gridComidas) renderSlots(gridComidas, slotsComida);
-  if (gridCenas)   renderSlots(gridCenas, slotsCena);
+
+    async function actualizarHorasDisponibles(fecha) {
+    if (!gridComidas || !gridCenas) return;
+
+    // Comprobar si es lunes (JS getDay(): 0=Dom, 1=Lun)
+    const dateObj = new Date(fecha);
+    const dayOfWeek = dateObj.getUTCDay(); 
+
+    if (dayOfWeek === 1) {
+      mostrarMensaje('El restaurante permanece cerrado los lunes. Por favor, seleccione otro día.', false);
+      renderSlots(gridComidas, slotsComida.map(s => ({ ...s, disponible: false })));
+      renderSlots(gridCenas, slotsCena.map(s => ({ ...s, disponible: false })));
+      resetSelection();
+      return;
+    }
+
+    limpiarErrores();
+
+    try {
+      const respuesta = await fetch(`/Reservas/GetHorasOcupadas?fecha=${fecha}`);
+      const horasOcupadas = await respuesta.json();
+
+      const ahora = new Date();
+      const esHoy = new Date(fecha).toDateString() === ahora.toDateString();
+
+      const filtrarPorAnticipacion = (slots) => {
+        return slots.map(s => {
+          if (!esHoy) return s;
+          
+          const [horas, minutos] = s.hora.split(':');
+          const horaReserva = new Date(ahora);
+          horaReserva.setHours(parseInt(horas), parseInt(minutos), 0, 0);
+          
+          const diferencia = horaReserva.getTime() - ahora.getTime();
+          const esValidaPorTiempo = diferencia >= 3600000; // 1 hora
+
+          return {
+            ...s,
+            disponible: s.disponible && esValidaPorTiempo
+          };
+        });
+      };
+
+      const slotsComidaProcesados = filtrarPorAnticipacion(slotsComida).map(s => ({
+        ...s,
+        disponible: s.disponible && !horasOcupadas.includes(s.hora)
+      }));
+
+      const slotsCenaProcesados = filtrarPorAnticipacion(slotsCena).map(s => ({
+        ...s,
+        disponible: s.disponible && !horasOcupadas.includes(s.hora)
+      }));
+
+      renderSlots(gridComidas, slotsComidaProcesados);
+      renderSlots(gridCenas, slotsCenaProcesados);
+      
+      verificarDisponibilidadTurno();
+
+      if (ReservaModel.estado.hora) {
+          const slotActivo = [...slotsComidaProcesados, ...slotsCenaProcesados].find(s => s.hora === ReservaModel.estado.hora);
+          if (!slotActivo || !slotActivo.disponible) {
+              resetSelection();
+          }
+      }
+    } catch (err) {
+      console.error('Error al obtener horas ocupadas:', err);
+      renderSlots(gridComidas, slotsComida);
+      renderSlots(gridCenas, slotsCena);
+    }
+  }
+
+  function verificarDisponibilidadTurno() {
+      const turnoActual = ReservaModel.estado.turno || 'Comida';
+      const grid = turnoActual === 'Comida' ? gridComidas : gridCenas;
+      const hayDisponibles = grid.querySelectorAll('.slot-hora').length > 0;
+
+      if (!hayDisponibles) {
+          grid.innerHTML = `
+            <div class="col-span-full py-12 text-center animate-on-scroll">
+                <p class="text-gray-400 font-serif italic text-lg mb-2">No hay horas disponibles en estos momentos</p>
+                <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-primary/60">Prueba con otro turno o fecha</p>
+            </div>
+          `;
+      }
+  }
+
+  // Carga inicial
+  if (dateInput) actualizarHorasDisponibles(dateInput.value);
 
   // --- Turno Comida / Cena ---
   const btnComida  = document.getElementById('btn-comida');
@@ -75,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gridCenas.classList.add('hidden');
       ReservaModel.actualizar('turno', 'Comida');
       resetSelection();
+      verificarDisponibilidadTurno();
     });
   }
 
@@ -88,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gridComidas.classList.add('hidden');
       ReservaModel.actualizar('turno', 'Cena');
       resetSelection();
+      verificarDisponibilidadTurno();
     });
   }
 

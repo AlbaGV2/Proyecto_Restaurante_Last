@@ -24,9 +24,44 @@
 
                 @Html.AntiForgeryToken()
 
-                <div class="text-center mb-16 animate-on-scroll" data-delay="0.1s">
+                <div class="text-center mb-16 animate-on-scroll relative" data-delay="0.1s">
                     <h2 class="font-serif text-2xl md:text-3xl font-bold text-dark mb-4">Detalles de la Reserva</h2>
                     <p class="text-gray-500 font-light text-sm">Seleccione el número de comensales, la fecha y la hora deseada.</p>
+                    
+                    <!-- Botón Leyenda -->
+                    <div class="absolute top-0 right-0 md:right-8 z-[60]">
+                        <button type="button" onclick="toggleLeyendaReservas()" class="text-primary/60 hover:text-primary transition-colors p-2" title="Ver leyenda de colores">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                        <!-- Popover Leyenda -->
+                        <div id="leyendaReservas" class="hidden absolute top-full mt-2 right-0 w-56 bg-white shadow-2xl border border-primary/20 rounded-[24px] p-6 z-[100] text-left animate-on-scroll">
+                            <h4 class="text-[10px] font-bold uppercase tracking-widest text-dark mb-4 border-b border-secondary pb-2">Leyenda</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full border border-primary"></div>
+                                    <span class="text-[10px] uppercase tracking-widest font-bold text-gray-400">Disponible</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-primary"></div>
+                                    <span class="text-[10px] uppercase tracking-widest font-bold text-gray-400">Seleccionado</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-gray-100"></div>
+                                    <span class="text-[10px] uppercase tracking-widest font-bold text-gray-400">Ocupado</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <span class="text-[10px] uppercase tracking-widest font-bold text-gray-400">Error</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-[10px] uppercase tracking-widest font-bold text-gray-400">Éxito</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Personas | Fecha -->
@@ -103,4 +138,20 @@
 
 @section Scripts {
     <script type="module" src="~/js/controllers/ReservasController.js"></script>
+    <script>
+        function toggleLeyendaReservas() {
+            const leyenda = document.getElementById('leyendaReservas');
+            leyenda.classList.toggle('hidden');
+            
+            if (!leyenda.classList.contains('hidden')) {
+                const closeHandler = (e) => {
+                    if (!leyenda.contains(e.target) && !e.target.closest('button')) {
+                        leyenda.classList.add('hidden');
+                        document.removeEventListener('click', closeHandler);
+                    }
+                };
+                setTimeout(() => document.addEventListener('click', closeHandler), 10);
+            }
+        }
+    </script>
 }

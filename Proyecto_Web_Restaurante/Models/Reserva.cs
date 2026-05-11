@@ -31,4 +31,15 @@ public class Reserva
 
     // Código identificativo de la reserva, ej: RES-X78Y
     public string IdReserva { get; set; } = string.Empty;
+
+    // Fecha y hora de creación de la reserva
+    public DateTime FechaCreacion { get; set; } = DateTime.Now;
+
+    // Fecha y hora de la última modificación
+    public DateTime? UltimaModificacion { get; set; }
+
+    // Campos para borrado lógico (Papelera)
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? FechaEliminacion { get; set; }
+    public bool WasRestored { get; set; } = false;
 }
