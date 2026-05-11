@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: restaurante_db
+    restart: always
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Password123
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+      - ./sql:/docker-entrypoint-initdb.d # Note: SQL Server doesn't support this out of the box like Postgres, but we can use a custom entrypoint if needed. For now, we'll keep it simple.
+
+volumes:
+  sql_data:
