@@ -18,7 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
     dateInput.value = today;
     dateInput.min   = today;
     ReservaModel.actualizar('fecha', today);
-    dateInput.addEventListener('change', () => ReservaModel.actualizar('fecha', dateInput.value));
+    dateInput.addEventListener('change', () => {
+      ReservaModel.actualizar('fecha', dateInput.value);
+      actualizarHorasDisponibles(dateInput.value);
+    });
   }
 
   // --- Personas ---
@@ -43,8 +46,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const gridComidas = document.getElementById('grid-comidas');
   const gridCenas   = document.getElementById('grid-cenas');
-  if (gridComidas) renderSlots(gridComidas, slotsComida);
-  if (gridCenas)   renderSlots(gridCenas, slotsCena);
+
+    async function actualizarHorasDisponibles(fecha) {
+    if (!gridComidas || !gridCenas) return;
+
+    // Comprobar si es lunes (JS getDay(): 0=Dom, 1=Lun)
+    const dateObj = new Date(fecha);
+    const dayOfWeek = dateObj.getUTCDay(); 
+
+    if (dayOfWeek === 1) {
+      mostrarMensaje('El restaurante permanece cerrado los lunes. Por favor, seleccione otro día.', false);
+      renderSlots(gridComidas, slotsComida.map(s => ({ ...s, disponible: false })));
+      renderSlots(gridCenas, slotsCena.map(s => ({ ...s, disponible: false })));
+      resetSelection();
+      return;
+    }
+
+    limpiarErrores();
+
+    try {
+      const respuesta = await fetch(`/Reservas/GetHorasOcupadas?fecha=${fecha}`);
+      const horasOcupadas = await respuesta.json();
+
+      const ahora = new Date();
+      const esHoy = new Date(fecha).toDateString() === ahora.toDateString();
+
+      const filtrarPorAnticipacion = (slots) => {
+        return slots.map(s => {
+          if (!esHoy) return s;
+          
+          const [horas, minutos] = s.hora.split(':');
+          const horaReserva = new Date(ahora);
+          horaReserva.setHours(parseInt(horas), parseInt(minutos), 0, 0);
+          
+          const diferencia = horaReserva.getTime() - ahora.getTime();
+          const esValidaPorTiempo = diferencia >= 3600000; // 1 hora
+
+          return {
+            ...s,
+            disponible: s.disponible && esValidaPorTiempo
+          };
+        });
+      };
+
+      const slotsComidaProcesados = filtrarPorAnticipacion(slotsComida).map(s => ({
+        ...s,
+        disponible: s.disponible && !horasOcupadas.includes(s.hora)
+      }));
+
+      const slotsCenaProcesados = filtrarPorAnticipacion(slotsCena).map(s => ({
+        ...s,
+        disponible: s.disponible && !horasOcupadas.includes(s.hora)
+      }));
+
+      renderSlots(gridComidas, slotsComidaProcesados);
+      renderSlots(gridCenas, slotsCenaProcesados);
+      
+      verificarDisponibilidadTurno();
+
+      if (ReservaModel.estado.hora) {
+          const slotActivo = [...slotsComidaProcesados, ...slotsCenaProcesados].find(s => s.hora === ReservaModel.estado.hora);
+          if (!slotActivo || !slotActivo.disponible) {
+              resetSelection();
+          }
+      }
+    } catch (err) {
+      console.error('Error al obtener horas ocupadas:', err);
+      renderSlots(gridComidas, slotsComida);
+      renderSlots(gridCenas, slotsCena);
+    }
+  }
+
+  function verificarDisponibilidadTurno() {
+      const turnoActual = ReservaModel.estado.turno || 'Comida';
+      const grid = turnoActual === 'Comida' ? gridComidas : gridCenas;
+      const hayDisponibles = grid.querySelectorAll('.slot-hora').length > 0;
+
+      if (!hayDisponibles) {
+          grid.innerHTML = `
+            <div class="col-span-full py-12 text-center animate-on-scroll">
+                <p class="text-gray-400 font-serif italic text-lg mb-2">No hay horas disponibles en estos momentos</p>
+                <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-primary/60">Prueba con otro turno o fecha</p>
+            </div>
+          `;
+      }
+  }
+
+  // Carga inicial
+  if (dateInput) actualizarHorasDisponibles(dateInput.value);
 
   // --- Turno Comida / Cena ---
   const btnComida  = document.getElementById('btn-comida');
@@ -75,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gridCenas.classList.add('hidden');
       ReservaModel.actualizar('turno', 'Comida');
       resetSelection();
+      verificarDisponibilidadTurno();
     });
   }
 
@@ -88,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gridComidas.classList.add('hidden');
       ReservaModel.actualizar('turno', 'Cena');
       resetSelection();
+      verificarDisponibilidadTurno();
     });
   }
 
@@ -114,15 +205,119 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- Nombre ---
+  const nombreInput = document.getElementById('nombre');
+  const errorNombre = document.getElementById('error-nombre');
+  if (nombreInput) {
+    nombreInput.addEventListener('input', () => {
+      ReservaModel.actualizar('nombre', nombreInput.value);
+      actualizarBoton();
+    });
+  }
+
+  // --- Email ---
+  const emailInput = document.getElementById('email');
+  const errorEmail = document.getElementById('error-email');
+  if (emailInput) {
+    emailInput.addEventListener('input', () => {
+      ReservaModel.actualizar('email', emailInput.value);
+      actualizarBoton();
+    });
+  }
+
+  // Activa/desactiva el botón Reservar según validez del modelo
+  function actualizarBoton() {
+    if (!btnReservar) return;
+    if (ReservaModel.esValida()) {
+      btnReservar.dataset.active = 'true';
+    } else {
+      btnReservar.dataset.active = 'false';
+    }
+  }
+
   // --- Botón Reservar ---
+  const mensajeDiv = document.getElementById('mensaje-reserva');
+
+  function mostrarMensaje(texto, esExito) {
+    if (!mensajeDiv) return;
+    mensajeDiv.textContent = texto;
+    mensajeDiv.className = esExito
+      ? 'text-center mb-8 px-4 py-3 rounded-2xl text-sm font-medium bg-green-50 text-green-700 border border-green-200'
+      : 'text-center mb-8 px-4 py-3 rounded-2xl text-sm font-medium bg-red-50 text-red-700 border border-red-200';
+  }
+
+  function limpiarErrores() {
+    if (errorNombre) { errorNombre.textContent = ''; errorNombre.classList.add('hidden'); }
+    if (errorEmail)  { errorEmail.textContent  = ''; errorEmail.classList.add('hidden'); }
+    if (mensajeDiv)  { mensajeDiv.className = 'hidden'; mensajeDiv.textContent = ''; }
+  }
+
   if (btnReservar) {
-    btnReservar.addEventListener('click', () => {
-      if (ReservaModel.esValida()) {
-        ReservaModel.guardar();
-        window.location.href = '../Auth//Auth/Login';
+    btnReservar.addEventListener('click', async () => {
+      if (!ReservaModel.esValida()) return;
+
+      limpiarErrores();
+      btnReservar.textContent = 'Enviando...';
+      btnReservar.disabled = true;
+
+      const { personas, fecha, turno, hora, nombre, email } = ReservaModel.estado;
+
+      // Obtener el token CSRF generado por ASP.NET Core
+      const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+      try {
+        const respuesta = await fetch('/Reservas/Crear', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': token
+          },
+          body: JSON.stringify({
+            nombre,
+            email,
+            fecha,
+            personas: parseInt(personas, 10),
+            turno,
+            hora
+          })
+        });
+
+        const datos = await respuesta.json();
+
+        if (respuesta.ok && datos.success) {
+          // Éxito: mostrar mensaje de confirmación y limpiar formulario
+          mostrarMensaje(datos.mensaje, true);
+          ReservaModel.limpiar();
+          if (nombreInput) nombreInput.value = '';
+          if (emailInput)  emailInput.value  = '';
+          btnReservar.dataset.active = 'false';
+        } else {
+          // Error del servidor: mostrar errores por campo
+          mostrarMensaje('Por favor, revisa los datos del formulario.', false);
+
+          if (datos.errores) {
+            if (datos.errores.Nombre && errorNombre) {
+              errorNombre.textContent = datos.errores.Nombre[0];
+              errorNombre.classList.remove('hidden');
+            }
+            if (datos.errores.Email && errorEmail) {
+              errorEmail.textContent = datos.errores.Email[0];
+              errorEmail.classList.remove('hidden');
+            }
+            // Otros errores (Fecha, Hora, etc.) se muestran en el mensaje general
+            const otrosErrores = Object.entries(datos.errores)
+              .filter(([k]) => k !== 'Nombre' && k !== 'Email')
+              .map(([, v]) => v[0])
+              .join(' ');
+            if (otrosErrores) mostrarMensaje(otrosErrores, false);
+          }
+        }
+      } catch (err) {
+        mostrarMensaje('Error de conexión. Por favor, inténtalo de nuevo.', false);
+      } finally {
+        btnReservar.textContent = 'Reservar';
+        btnReservar.disabled = false;
       }
     });
   }
 });
-
-

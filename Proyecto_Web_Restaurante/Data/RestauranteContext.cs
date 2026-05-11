@@ -12,4 +12,5 @@ public class RestauranteContext : DbContext
 
     // Esta propiedad le dice a SQL que cree una tabla llamada "Reservas"
     public DbSet<Reserva> Reservas { get; set; }
+    public DbSet<LogDescarga> LogDescargas { get; set; }
 }

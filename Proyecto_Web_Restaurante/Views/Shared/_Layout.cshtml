@@ -31,33 +31,35 @@
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="bg-secondary text-dark mx-auto max-w-[1400px] shadow-2xl min-h-screen flex flex-col">
+<body class="bg-secondary text-dark min-h-screen flex flex-col">
 
     <!-- Header (Migrado de _Header.js) -->
-    <header class="flex justify-between items-center px-6 md:px-10 py-4 bg-white/40 backdrop-blur-2xl backdrop-saturate-[1.8] sticky top-0 z-50 shrink-0 border-b border-white/50 shadow-sm">
-        <!-- Logo -->
-        <a asp-controller="Home" asp-action="Index" class="flex items-center gap-3 hover:opacity-80 transition z-50">
-            <svg class="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" fill="currentColor"/>
-            </svg>
-            <span class="font-serif font-bold text-xl tracking-[0.2em] uppercase text-dark">Restaurante</span>
-        </a>
+    <header class="bg-white/40 backdrop-blur-2xl backdrop-saturate-[1.8] sticky top-0 z-50 shrink-0 border-b border-white/50 shadow-sm">
+        <div class="max-w-[1600px] mx-auto flex justify-between items-center px-6 md:px-10 py-4">
+            <!-- Logo -->
+            <a asp-controller="Home" asp-action="Index" class="flex items-center gap-3 hover:opacity-80 transition z-50">
+                <svg class="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" fill="currentColor"/>
+                </svg>
+                <span class="font-serif font-bold text-xl tracking-[0.2em] uppercase text-dark">Restaurante</span>
+            </a>
 
-        <!-- Navegación Desktop -->
-        <nav class="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-widest text-dark">
-            <a asp-controller="Home" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "text-primary" : "hover:text-primary") transition-colors hover:-translate-y-0.5 transform duration-300">Inicio</a>
-            <a asp-controller="Menu" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Menu" ? "text-primary" : "hover:text-primary") transition-colors hover:-translate-y-0.5 transform duration-300">Menú</a>
-            <a asp-controller="QuienesSomos" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "QuienesSomos" ? "text-primary" : "hover:text-primary") transition-colors hover:-translate-y-0.5 transform duration-300">Sobre Nosotros</a>
-            <a asp-controller="Contacto" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Contacto" ? "text-primary" : "hover:text-primary") transition-colors hover:-translate-y-0.5 transform duration-300">Contáctanos</a>
-            <a asp-controller="Reservas" asp-action="Index" class="bg-dark text-white px-6 py-3 rounded-full hover:bg-primary transition-colors duration-300">Haz Reserva</a>
-        </nav>
+            <!-- Navegación Desktop -->
+            <nav class="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-widest text-dark">
+                <a asp-controller="Home" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "text-primary" : "hover:text-primary") transition-colors hover:-translate-y-0.5 transform duration-300">Inicio</a>
+                <a asp-controller="Menu" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Menu" ? "text-primary" : "hover:text-primary") transition-colors hover:-translate-y-0.5 transform duration-300">Menú</a>
+                <a asp-controller="QuienesSomos" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "QuienesSomos" ? "text-primary" : "hover:text-primary") transition-colors hover:-translate-y-0.5 transform duration-300">Sobre Nosotros</a>
+                <a asp-controller="Contacto" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Contacto" ? "text-primary" : "hover:text-primary") transition-colors hover:-translate-y-0.5 transform duration-300">Contáctanos</a>
+                <a asp-controller="Reservas" asp-action="Index" class="bg-dark text-white px-6 py-3 rounded-full hover:bg-primary transition-colors duration-300">Haz Reserva</a>
+            </nav>
 
-        <!-- Botón Menú Hamburguesa Mobile -->
-        <button id="header-menu-btn" class="md:hidden flex flex-col gap-1.5 z-50 p-2 group" aria-label="Abrir menú">
-            <span class="block w-6 h-0.5 bg-dark transition-transform duration-300 origin-center group-hover:bg-primary" id="h-line1"></span>
-            <span class="block w-6 h-0.5 bg-dark transition-opacity duration-300 group-hover:bg-primary" id="h-line2"></span>
-            <span class="block w-6 h-0.5 bg-dark transition-transform duration-300 origin-center group-hover:bg-primary" id="h-line3"></span>
-        </button>
+            <!-- Botón Menú Hamburguesa Mobile -->
+            <button id="header-menu-btn" class="md:hidden flex flex-col gap-1.5 z-50 p-2 group" aria-label="Abrir menú">
+                <span class="block w-6 h-0.5 bg-dark transition-transform duration-300 origin-center group-hover:bg-primary" id="h-line1"></span>
+                <span class="block w-6 h-0.5 bg-dark transition-opacity duration-300 group-hover:bg-primary" id="h-line2"></span>
+                <span class="block w-6 h-0.5 bg-dark transition-transform duration-300 origin-center group-hover:bg-primary" id="h-line3"></span>
+            </button>
+        </div>
     </header>
 
     <!-- Overlay Menú Mobile -->

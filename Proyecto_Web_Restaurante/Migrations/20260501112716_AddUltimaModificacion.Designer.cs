@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Restaurante.Data;
 
@@ -11,9 +12,11 @@ using Restaurante.Data;
 namespace Restaurante.Migrations
 {
     [DbContext(typeof(RestauranteContext))]
-    partial class RestauranteContextModelSnapshot : ModelSnapshot
+    [Migration("20260501112716_AddUltimaModificacion")]
+    partial class AddUltimaModificacion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,46 +24,6 @@ namespace Restaurante.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Restaurante.Models.LogDescarga", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("FechaDescarga")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FiltroFechaFin")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FiltroFechaInicio")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Formato")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IpAddress")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TotalRegistros")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UsuarioId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UsuarioNombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("LogDescargas");
-                });
 
             modelBuilder.Entity("Restaurante.Models.Reserva", b =>
                 {
@@ -78,12 +41,6 @@ namespace Restaurante.Migrations
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaEliminacion")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Hora")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -91,9 +48,6 @@ namespace Restaurante.Migrations
                     b.Property<string>("IdReserva")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -109,9 +63,6 @@ namespace Restaurante.Migrations
 
                     b.Property<DateTime?>("UltimaModificacion")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("WasRestored")
-                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
