@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  web:
+    build: .
+    container_name: restaurante_web
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Sobrescribimos la conexión para que apunte al contenedor 'db' con el usuario y contraseña de SQL Server
+      - ConnectionStrings__DefaultConnection=Server=db;Database=RestauranteBD;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=True;
+
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: restaurante_db
