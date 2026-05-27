@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<!-- Hero Section -->
+        <div class="w-full h-[85vh] relative animate-on-scroll">
+            <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" alt="Interior del Restaurante Lujoso" class="w-full h-full object-cover" />
+            <div class="absolute inset-0 bg-black/40"></div>
+            <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4 animate-on-scroll" data-delay="0.3s">
+                <h1 class="font-serif text-4xl md:text-5xl text-white font-bold tracking-wider mb-6">Restaurante</h1>
+                <p class="text-white/90 font-light text-sm md:text-base tracking-[0.3em] uppercase mb-12">La Alta Gastronomía</p>
+                <a asp-controller="Reservas" asp-action="Index" class="bg-primary text-white px-10 py-4 rounded-full text-sm uppercase font-bold tracking-[0.2em] hover:bg-[#b0946e] transition duration-300 shadow-xl">Haz tu reserva</a>
+            </div>
+        </div>
+
+        <!-- Nuestra Esencia -->
+        <div class="px-4 md:px-10 py-24 flex justify-center bg-white animate-on-scroll">
+            <div class="px-4 md:px-16 max-w-4xl text-center w-full">
+                <h2 class="font-serif text-2xl md:text-3xl font-bold text-dark mb-6">Nuestra Esencia</h2>
+                <div class="w-16 h-0.5 bg-primary mx-auto mb-8"></div>
+                <p class="text-gray-600 font-light text-sm md:text-base leading-[2] max-w-3xl mx-auto">
+                    Un restaurante de lujo es un espacio exclusivo donde la alta gastronomía se combina con un servicio impecable y una atmósfera elegante. Cada detalle —desde la presentación artística de los platos hasta la cuidada selección de vinos y la ambientación sofisticada— está pensado para ofrecer una experiencia culinaria única, refinada y memorable.
+                </p>
+            </div>
+        </div>
+
+        <!-- Tres tarjetas -->
+        <div class="bg-secondary px-4 md:px-10 py-24">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-[1200px] mx-auto">
+
+                <!-- Tarjeta Menús -->
+                <div class="bg-white p-12 flex flex-col items-center justify-center text-center md:h-[400px] shadow-sm animate-on-scroll" data-delay="0s">
+                    <h3 class="font-serif text-xl font-bold text-dark mb-4">Nuestros menús</h3>
+                    <p class="text-gray-500 font-light text-sm mb-8 leading-[1.8]">Una selección de platos elaborados con los mejores ingredientes de temporada, diseñados para sorprenderte.</p>
+                    <a asp-controller="Menu" asp-action="Index" class="bg-dark text-white px-8 py-3 rounded-full text-xs uppercase font-bold tracking-widest hover:bg-primary transition shadow-md">Ver Menú</a>
+                </div>
+                <!-- Tarjeta Imagen -->
+                <div class="rounded-sm overflow-hidden relative group md:h-[400px] shadow-sm animate-on-scroll" data-delay="0.2s">
+                    <img src="https://images.unsplash.com/photo-1544025162-d76694265947?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Plato Gourmet" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+                    <div class="absolute inset-0 flex items-center justify-between px-4">
+                        <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex justify-center items-center cursor-pointer hover:bg-primary hover:text-white transition duration-300">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex justify-center items-center cursor-pointer hover:bg-primary hover:text-white transition duration-300">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta Horario -->
+                <div class="bg-white p-12 flex flex-col justify-center text-center md:h-[400px] shadow-sm animate-on-scroll" data-delay="0.4s">
+                    <h3 class="font-serif text-xl font-bold text-dark mb-6">Horarios</h3>
+                    <div class="w-12 h-0.5 bg-primary mx-auto mb-8"></div>
+                    <div class="flex flex-col gap-5 text-sm text-dark font-medium">
+                        <div>
+                            <p class="text-xs tracking-widest font-bold uppercase mb-1">Martes - Viernes</p>
+                            <p class="text-gray-500 font-light">13:00 - 16:00 <br> 20:00 - 23:00</p>
+                        </div>
+                        <div>
+                            <p class="text-xs tracking-widest font-bold uppercase mb-1">Fines de Semana</p>
+                            <p class="text-gray-500 font-light">13:00 - 00:00</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+@section Scripts {
+    <script type="module" src="~/js/controllers/HomeController.js"></script>
+}

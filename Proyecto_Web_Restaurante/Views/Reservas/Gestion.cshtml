@@ -1,0 +1,1625 @@
+@model Restaurante.Models.ReservasGestionViewModel
+@{
+    ViewData["Title"] = "Gestión de Reservas";
+}
+<style>
+    .custom-tooltip {
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #1a1a1a;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-size: 10px;
+        line-height: 1.4;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition-delay: 2s;
+        z-index: 100;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .custom-tooltip::after {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 0 4px 4px 4px;
+        border-style: solid;
+        border-color: transparent transparent #1a1a1a transparent;
+    }
+    .group:hover .custom-tooltip {
+        opacity: 1;
+        visibility: visible;
+        top: calc(100% + 15px);
+    }
+</style>
+
+<!-- Hero -->
+<div class="w-full h-[40vh] relative animate-on-scroll">
+    <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" alt="Gestión" class="w-full h-full object-cover" />
+    <div class="absolute inset-0 bg-black/60"></div>
+    <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
+        <h1 class="font-serif text-3xl md:text-4xl text-white font-bold tracking-wider mb-6">Gestor de Reservas</h1>
+        <div class="w-16 h-0.5 bg-primary mx-auto mb-6"></div>
+        <p class="text-white/80 font-light tracking-widest uppercase text-sm mb-8">Administración de clientes y mesas</p>
+        
+        <!-- Botón Nueva Reserva para Administrador/Camarero -->
+        <a asp-action="Index" class="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full text-xs font-bold tracking-[0.2em] uppercase hover:bg-white hover:text-dark transition-all duration-300 shadow-lg transform hover:-translate-y-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+            </svg>
+            Nueva Reserva
+        </a>
+    </div>
+</div>
+
+<!-- Listado de Reservas -->
+<div class="px-4 md:px-10 py-24 bg-secondary/30 min-h-[60vh]">
+    <div class="max-w-[1600px] mx-auto">
+        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-12">
+            <h2 class="font-serif text-2xl font-bold text-dark whitespace-nowrap">Historial de Reservas</h2>
+            
+            <div class="flex flex-wrap items-center justify-end gap-3">
+                <!-- Buscador -->
+                <form asp-action="Gestion" method="get" class="relative group">
+                    <input type="hidden" name="sortOrder" value="@Model.SortOrder" />
+                    <input type="hidden" name="fechaInicio" value="@(Model.FechaInicio?.ToString("yyyy-MM-dd"))" />
+                    <input type="hidden" name="fechaFin" value="@(Model.FechaFin?.ToString("yyyy-MM-dd"))" />
+                    
+                    <input type="text" name="searchString" value="@Model.SearchString" 
+                           placeholder="Buscar..." 
+                           class="bg-secondary/50 border border-[#eaddce] rounded-xl px-9 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all outline-none w-[180px] sm:w-[220px]" />
+                    
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </form>
+
+                <!-- Iconos de Acción -->
+                <div class="flex items-center gap-1.5">
+                    <button type="button" onclick="abrirCalendario()" class="relative bg-secondary/50 hover:bg-secondary p-2.5 rounded-xl border border-[#eaddce] transition-all group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    </button>
+
+                    <button type="button" onclick="abrirModalFiltro()" class="relative bg-secondary/50 hover:bg-secondary p-2.5 rounded-xl border border-[#eaddce] transition-all group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                    </button>
+
+                    <button type="button" onclick="togglePapelera()" class="relative bg-secondary/50 hover:bg-secondary p-2.5 rounded-xl border border-[#eaddce] transition-all group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        @if (Model.ReservasEliminadas.Any()) { <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">@Model.ReservasEliminadas.Count</span> }
+                    </button>
+
+                    <div class="relative inline-block text-left" id="dropdownExportar">
+                        <button type="button" onclick="toggleExportMenu()" class="relative bg-secondary/50 hover:bg-secondary p-2.5 rounded-xl border border-[#eaddce] transition-all group">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        </button>
+                        <div id="menuExportar" class="hidden absolute right-0 mt-2 w-64 rounded-3xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5 z-[150] border border-secondary overflow-hidden">
+                            <div class="p-5 border-b border-secondary bg-secondary/20"><h4 class="text-[9px] font-black uppercase tracking-[0.2em] text-primary">Exportar</h4></div>
+                            <div class="p-4 space-y-3">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="relative group">
+                                        <input type="text" id="export_inicio" placeholder="Inicio" class="w-full bg-white border border-secondary rounded-lg px-2 py-1.5 pr-7 text-[10px] font-bold date-mask outline-none focus:ring-1 focus:ring-primary/30" />
+                                        <button type="button" onclick="this.nextElementSibling.showPicker()" class="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        </button>
+                                        <input type="date" class="absolute inset-0 opacity-0 pointer-events-none" onchange="sincronizarFecha(this, 'export_inicio')" />
+                                    </div>
+                                    <div class="relative group">
+                                        <input type="text" id="export_fin" placeholder="Fin" class="w-full bg-white border border-secondary rounded-lg px-2 py-1.5 pr-7 text-[10px] font-bold date-mask outline-none focus:ring-1 focus:ring-primary/30" />
+                                        <button type="button" onclick="this.nextElementSibling.showPicker()" class="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-primary transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        </button>
+                                        <input type="date" class="absolute inset-0 opacity-0 pointer-events-none" onchange="sincronizarFecha(this, 'export_fin')" />
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-1.5">
+                                    <button onclick="exportarFormato('pdf')" class="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">PDF</button>
+                                    <button onclick="exportarFormato('excel')" class="flex items-center gap-2 px-3 py-2 bg-green-50 text-green-600 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all">Excel</button>
+                                    <button onclick="exportarFormato('svg')" class="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">SVG (Apple)</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative inline-block text-left" id="dropdownHerramientas">
+                        <button type="button" onclick="toggleHerramientasMenu()" class="relative bg-secondary/50 hover:bg-secondary p-2.5 rounded-xl border border-[#eaddce] transition-all group">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        </button>
+                        <div id="menuHerramientas" class="hidden absolute right-0 mt-2 w-72 rounded-3xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5 z-[150] border border-secondary overflow-hidden">
+                            <div class="p-5 border-b border-secondary bg-secondary/20"><h4 class="text-[9px] font-black uppercase tracking-[0.2em] text-primary mb-1">Auditoría</h4></div>
+                            <div class="py-2 divide-y divide-gray-50">
+                                <button onclick="toggleHistorialDescargas()" class="flex items-center gap-3 w-full px-6 py-4 text-xs font-bold text-gray-700 hover:bg-secondary hover:text-primary transition-all uppercase tracking-widest group text-left">
+                                    Historial descargas
+                                </button>
+                                <button onclick="toggleUsuarios()" class="flex items-center gap-3 w-full px-6 py-4 text-xs font-bold text-gray-700 hover:bg-secondary hover:text-primary transition-all uppercase tracking-widest group text-left">
+                                    Usuarios
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bloque Info (Contador y Volver) -->
+                <div class="flex items-center gap-4 ml-2">
+                    <div class="bg-secondary/50 px-5 py-2.5 rounded-xl border border-[#eaddce] flex flex-col items-center min-w-[100px]">
+                        <span class="text-[8px] uppercase tracking-widest font-bold text-gray-400 mb-0.5">Total Reservas</span>
+                        <span class="text-lg font-black text-dark leading-none">@Model.TotalReservas</span>
+                    </div>
+                    <a asp-action="Index" class="text-[10px] font-bold tracking-widest uppercase text-primary hover:text-dark transition-all whitespace-nowrap">
+                        ← Volver al formulario
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección Papelera (Oculta por defecto) -->
+        <div id="seccion-papelera" class="hidden mb-12 bg-white rounded-[30px] shadow-lg border border-red-100 overflow-hidden transition-all duration-300">
+            <div class="bg-red-50 px-8 py-4 border-b border-red-100 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <span class="p-2 bg-red-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </span>
+                    <h3 class="font-serif text-lg font-bold text-red-900">Reservas Eliminadas</h3>
+                </div>
+                <button onclick="togglePapelera()" class="text-red-400 hover:text-red-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 text-[10px] uppercase tracking-widest font-bold text-gray-500 border-b border-gray-100">
+                            <th class="px-8 py-4">ID</th>
+                            <th class="px-8 py-4">Eliminada el</th>
+                            <th class="px-8 py-4">Cliente</th>
+                            <th class="px-8 py-4">Teléfono</th>
+                            <th class="px-8 py-4">Email</th>
+                            <th class="px-8 py-4 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        @if (!Model.ReservasEliminadas.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="px-8 py-10 text-center text-gray-400 italic">No hay reservas eliminadas recientemente.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var r in Model.ReservasEliminadas)
+                            {
+                                <tr class="hover:bg-red-50/30 transition-colors">
+                                    <td class="px-8 py-4 font-bold text-red-700">@r.IdReserva</td>
+                                    <td class="px-8 py-4 text-xs text-gray-500">@(r.FechaEliminacion?.ToString("dd/MM HH:mm") ?? "-")</td>
+                                    <td class="px-8 py-4 font-medium text-dark">@r.Nombre</td>
+                                    <td class="px-8 py-4 text-gray-500">@r.Telefono</td>
+                                    <td class="px-8 py-4 text-gray-500">@r.Email</td>
+                                    <td class="px-8 py-4 text-center">
+                                        <div class="flex justify-center gap-2">
+                                            <form asp-action="Restaurar" method="post" onsubmit="return confirmarRestauracion(event)">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@r.Id" />
+                                                <button type="submit" class="bg-primary/10 hover:bg-primary text-primary hover:text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all">
+                                                    Restaurar
+                                                </button>
+                                            </form>
+                                            <form asp-action="EliminarDefinitivamente" method="post" onsubmit="return confirmarBorradoDefinitivo(event)">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@r.Id" />
+                                                <button type="submit" class="bg-red-100 hover:bg-red-600 text-red-600 hover:text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all">
+                                                    Eliminar
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sección Historial de Descargas -->
+        <div id="seccion-historial" class="hidden mb-12 bg-white rounded-[30px] shadow-lg border border-primary/10 overflow-hidden transition-all duration-300">
+            <div class="bg-secondary/20 px-8 py-4 border-b border-primary/10 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <span class="p-2 bg-primary/10 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </span>
+                    <h3 class="font-serif text-lg font-bold text-dark">Historial de Descargas de Doc.</h3>
+                </div>
+                <button onclick="toggleHistorialDescargas()" class="text-gray-400 hover:text-dark transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 text-[10px] uppercase tracking-widest font-bold text-gray-500 border-b border-gray-100">
+                            <th class="px-8 py-4">ID</th>
+                            <th class="px-8 py-4">Fecha Descarga</th>
+                            <th class="px-8 py-4">Usuario</th>
+                            <th class="px-8 py-4">Formato</th>
+                            <th class="px-8 py-4">Registros</th>
+                            <th class="px-8 py-4">Filtro Aplicado</th>
+                            <th class="px-8 py-4 text-center">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        @if (Model.LogDescargas == null || !Model.LogDescargas.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="px-8 py-10 text-center text-gray-400 italic">No hay registros de descargas todavía.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var log in Model.LogDescargas.OrderByDescending(l => l.FechaDescarga))
+                            {
+                                <tr class="hover:bg-secondary/20 transition-colors">
+                                    <td class="px-8 py-4 font-bold text-primary">@log.IdFormateado</td>
+                                    <td class="px-8 py-4 text-gray-500">@log.FechaDescarga.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="px-8 py-4 font-semibold text-dark">@(log.UsuarioNombre ?? "Anónimo")</td>
+                                    <td class="px-8 py-4">
+                                        <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase @(log.Formato == "pdf" ? "bg-red-100 text-red-600" : log.Formato == "excel" ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600")">
+                                            @log.Formato
+                                        </span>
+                                    </td>
+                                    <td class="px-8 py-4 font-bold">@log.TotalRegistros</td>
+                                    <td class="px-8 py-4 text-[10px] text-gray-400">
+                                        @if (log.FiltroFechaInicio.HasValue || log.FiltroFechaFin.HasValue)
+                                        {
+                                            <span>@(log.FiltroFechaInicio?.ToString("dd/MM") ?? "...") - @(log.FiltroFechaFin?.ToString("dd/MM") ?? "...")</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Sin filtros</span>
+                                        }
+                                    </td>
+                                    <td class="px-8 py-4 text-center">
+                                        <span class="flex items-center justify-center gap-1.5 text-green-600 font-bold text-[9px] uppercase tracking-tighter">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                            Completado
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sección Control de Usuarios (Oculta por defecto) -->
+        <div id="seccion-usuarios" class="hidden mb-12 bg-white rounded-[30px] shadow-lg border border-primary/10 overflow-hidden transition-all duration-300">
+            <div class="bg-secondary/20 px-8 py-4 border-b border-primary/10 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <span class="p-2 bg-primary/10 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </span>
+                    <h3 class="font-serif text-lg font-bold text-dark">Personal Registrado (Camareros / Administradores)</h3>
+                </div>
+                <button onclick="toggleUsuarios()" class="text-gray-400 hover:text-dark transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 text-[10px] uppercase tracking-widest font-bold text-gray-500 border-b border-gray-100">
+                            <th class="px-8 py-4">Usuario</th>
+                            <th class="px-8 py-4">Nombre</th>
+                            <th class="px-8 py-4">Rol</th>
+                            <th class="px-8 py-4 text-center">Estado</th>
+                            <th class="px-8 py-4 text-center">Último Acceso</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 text-dark/80">
+                        <tr class="hover:bg-secondary/20 transition-colors">
+                            <td class="px-8 py-4 font-bold text-primary">mikel@restaurante.es</td>
+                            <td class="px-8 py-4 font-semibold text-dark">Mikel</td>
+                            <td class="px-8 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Administrador / Camarero</td>
+                            <td class="px-8 py-4 text-center">
+                                <span class="inline-flex items-center justify-center gap-1.5 text-green-600 font-bold text-[9px] uppercase tracking-tighter">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                    Activo
+                                </span>
+                            </td>
+                            <td class="px-8 py-4 text-center text-xs text-gray-400">Reciente (En línea)</td>
+                        </tr>
+                        <tr class="hover:bg-secondary/20 transition-colors">
+                            <td class="px-8 py-4 font-bold text-primary">alba@restaurante.es</td>
+                            <td class="px-8 py-4 font-semibold text-dark">Alba</td>
+                            <td class="px-8 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Administradora / Camarera</td>
+                            <td class="px-8 py-4 text-center">
+                                <span class="inline-flex items-center justify-center gap-1.5 text-green-600 font-bold text-[9px] uppercase tracking-tighter">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                    Activo
+                                </span>
+                            </td>
+                            <td class="px-8 py-4 text-center text-xs text-gray-400">Hace 2 horas</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="mb-8 bg-green-100 border border-green-200 text-green-700 px-6 py-4 rounded-xl text-sm font-medium animate-on-scroll">
+                @TempData["Mensaje"]
+            </div>
+        }
+
+        <div class="bg-white rounded-[30px] shadow-sm border border-[#eaddce]/50 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table id="tablaReservas" class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-dark text-white uppercase text-[10px] tracking-[0.2em] font-bold">
+                            <th class="px-8 py-6">
+                                <a asp-action="Gestion" asp-route-sortOrder="@ViewData["IdSortParm"]" class="hover:text-primary transition-colors flex items-center gap-2">
+                                    ID Reserva
+                                    @if ((string)ViewData["CurrentSort"] == "Id") { <span>↑</span> }
+                                    else if ((string)ViewData["CurrentSort"] == "id_desc") { <span>↓</span> }
+                                </a>
+                            </th>
+                            <th class="px-8 py-6">
+                                <a asp-action="Gestion" asp-route-sortOrder="@ViewData["DateSortParm"]" class="hover:text-primary transition-colors flex items-center gap-2">
+                                    Fecha
+                                    @if (string.IsNullOrEmpty((string)ViewData["CurrentSort"])) { <span>↓</span> }
+                                    else if ((string)ViewData["CurrentSort"] == "date_asc") { <span>↑</span> }
+                                </a>
+                            </th>
+                            <th class="px-8 py-6">Hora</th>
+                            <th class="px-8 py-6">
+                                <a asp-action="Gestion" asp-route-sortOrder="@ViewData["NameSortParm"]" class="hover:text-primary transition-colors flex items-center gap-2">
+                                    Cliente
+                                    @if ((string)ViewData["CurrentSort"] == "Name") { <span>↑</span> }
+                                    else if ((string)ViewData["CurrentSort"] == "name_desc") { <span>↓</span> }
+                                </a>
+                            </th>
+                            <th class="px-8 py-6">Email</th>
+                            <th class="px-8 py-6">Teléfono</th>
+                            <th class="px-8 py-6 text-center">
+                                <a asp-action="Gestion" asp-route-sortOrder="@ViewData["PersonSortParm"]" class="hover:text-primary transition-colors inline-flex items-center gap-2">
+                                    Personas
+                                    @if ((string)ViewData["CurrentSort"] == "Personas") { <span>↑</span> }
+                                    else if ((string)ViewData["CurrentSort"] == "person_desc") { <span>↓</span> }
+                                </a>
+                            </th>
+                            <th class="px-8 py-6 text-center">Turno</th>
+                            <th class="px-8 py-6 text-center">
+                                <div class="flex items-center justify-center gap-2 relative group">
+                                    Modificación
+                                    <button type="button" onclick="toggleLeyenda()" class="text-primary/60 hover:text-primary transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
+                                    <!-- Leyenda -->
+                                    <div id="leyendaModificacion" class="hidden absolute top-full mt-2 right-0 w-48 bg-white shadow-xl border border-primary/20 rounded-2xl p-4 z-50 text-left normal-case tracking-normal font-medium animate-on-scroll">
+                                        <h4 class="text-[10px] font-bold uppercase tracking-widest text-dark mb-3 border-b border-secondary pb-2">Leyenda</h4>
+                                        <div class="space-y-3">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-3 h-3 rounded-full bg-gray-500"></div>
+                                                <span class="text-[10px] text-gray-600">Fecha creación</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-3 h-3 rounded-full bg-orange-500"></div>
+                                                <span class="text-[10px] text-orange-600 font-bold">Modificada</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                                <span class="text-[10px] text-green-600 font-bold">Restaurada</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="px-8 py-6 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-dark/80">
+                        @if (Model.Reservas.Any())
+                        {
+                            foreach (var reserva in Model.Reservas)
+                            {
+                                <tr class="border-b border-gray-100 hover:bg-secondary/20 transition-colors">
+                                    <td class="px-8 py-5 font-bold text-primary">@reserva.IdReserva</td>
+                                    <td class="px-8 py-5 font-medium">@reserva.Fecha.ToString("dd/MM/yyyy")</td>
+                                    <td class="px-8 py-5">@reserva.Hora</td>
+                                    <td class="px-8 py-5 font-bold text-dark">@reserva.Nombre</td>
+                                    <td class="px-8 py-5 text-sm">@reserva.Email</td>
+                                    <td class="px-8 py-5 text-sm">@reserva.Telefono</td>
+                                    <td class="px-8 py-5 text-center font-bold">@reserva.Personas</td>
+                                    <td class="px-8 py-5 text-center">
+                                        <span class="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest @(reserva.Turno.ToLower() == "comida" ? "bg-orange-100 text-orange-600" : "bg-blue-100 text-blue-600")">
+                                            @reserva.Turno
+                                        </span>
+                                    </td>
+                                    <td class="px-8 py-5 text-center text-[10px]">
+                                        @if (reserva.WasRestored)
+                                        {
+                                            <div class="flex flex-col text-green-600 font-bold" title="Restaurada el @reserva.UltimaModificacion?.ToString("dd/MM HH:mm")">
+                                                <span>@reserva.UltimaModificacion?.ToString("dd/MM HH:mm")</span>
+                                                <span class="text-[8px] uppercase tracking-tighter opacity-70">Restaurada</span>
+                                            </div>
+                                        }
+                                        else if (reserva.UltimaModificacion.HasValue)
+                                        {
+                                            <div class="flex flex-col text-orange-600 font-bold" title="Editado el @reserva.UltimaModificacion.Value.ToString("dd/MM HH:mm")">
+                                                <span>@reserva.UltimaModificacion.Value.ToString("dd/MM HH:mm")</span>
+                                                <span class="text-[8px] uppercase tracking-tighter opacity-70">Modificada</span>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-gray-500">@reserva.FechaCreacion.ToString("dd/MM HH:mm")</span>
+                                        }
+                                    </td>
+                                    <td class="px-8 py-5 text-center">
+                                        <div class="flex justify-center gap-3">
+                                            <button type="button" 
+                                                    onclick="abrirModalEditar({
+                                                        id: '@reserva.Id',
+                                                        idReserva: '@reserva.IdReserva',
+                                                        nombre: '@reserva.Nombre',
+                                                        email: '@reserva.Email',
+                                                        telefono: '@reserva.Telefono',
+                                                        fecha: '@reserva.Fecha.ToString("yyyy-MM-dd")',
+                                                        personas: '@reserva.Personas',
+                                                        turno: '@reserva.Turno',
+                                                        hora: '@reserva.Hora'
+                                                    })" 
+                                                    class="text-blue-500 hover:text-blue-700 transition-colors" title="Editar">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            </button>
+                                            <form asp-action="Eliminar" asp-route-id="@reserva.Id" method="post" onsubmit="return confirmarBorrado(event, '@reserva.Nombre');" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="text-red-500 hover:text-red-700 transition-colors" title="Eliminar">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="10" class="px-8 py-20 text-center text-gray-400 italic">
+                                    No hay reservas registradas actualmente.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            @if (Model.TotalPaginas > 1)
+            {
+                <div class="bg-gray-50/50 px-8 py-6 flex justify-between items-center border-t border-gray-100">
+                    <div class="text-[10px] uppercase tracking-widest font-bold text-gray-400">
+                        Página @Model.PaginaActual de @Model.TotalPaginas
+                    </div>
+                    <div class="flex gap-2">
+                        <!-- Botón Anterior -->
+                        @if (Model.TienePaginaAnterior)
+                        {
+                            <a asp-action="Gestion" asp-route-pagina="@(Model.PaginaActual - 1)" asp-route-sortOrder="@Model.SortOrder" asp-route-searchString="@Model.SearchString" asp-route-fechaInicio="@(Model.FechaInicio?.ToString("yyyy-MM-dd"))" asp-route-fechaFin="@(Model.FechaFin?.ToString("yyyy-MM-dd"))"
+                               class="bg-white border border-gray-200 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-dark hover:text-white transition-all shadow-sm">
+                                Anterior
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="bg-gray-100 text-gray-300 border border-gray-200 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest cursor-not-allowed">
+                                Anterior
+                            </span>
+                        }
+
+                        <!-- Números de Página -->
+                        <div class="flex items-center gap-1 mx-2">
+                            @for (int i = 1; i <= Model.TotalPaginas; i++)
+                            {
+                                if (i == 1 || i == Model.TotalPaginas || (i >= Model.PaginaActual - 1 && i <= Model.PaginaActual + 1))
+                                {
+                                    <a asp-action="Gestion" 
+                                       asp-route-pagina="@i" 
+                                       asp-route-sortOrder="@Model.SortOrder" 
+                                       asp-route-searchString="@Model.SearchString" 
+                                       asp-route-fechaInicio="@(Model.FechaInicio?.ToString("yyyy-MM-dd"))" 
+                                       asp-route-fechaFin="@(Model.FechaFin?.ToString("yyyy-MM-dd"))"
+                                       class="w-8 h-8 flex items-center justify-center rounded-full text-[10px] font-bold transition-all @(Model.PaginaActual == i ? "bg-dark text-white shadow-md scale-110" : "bg-white text-gray-500 hover:bg-primary hover:text-white border border-gray-100")">
+                                        @i
+                                    </a>
+                                }
+                                else if (i == Model.PaginaActual - 2 || i == Model.PaginaActual + 2)
+                                {
+                                    <span class="px-1 text-gray-400 text-xs">...</span>
+                                }
+                            }
+                        </div>
+
+                        <!-- Botón Siguiente -->
+                        @if (Model.TienePaginaSiguiente)
+                        {
+                            <a asp-action="Gestion" asp-route-pagina="@(Model.PaginaActual + 1)" asp-route-sortOrder="@Model.SortOrder" asp-route-searchString="@Model.SearchString" asp-route-fechaInicio="@(Model.FechaInicio?.ToString("yyyy-MM-dd"))" asp-route-fechaFin="@(Model.FechaFin?.ToString("yyyy-MM-dd"))"
+                               class="bg-white border border-gray-200 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-dark hover:text-white transition-all shadow-sm">
+                                Siguiente
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="bg-gray-100 text-gray-300 border border-gray-200 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest cursor-not-allowed">
+                                Siguiente
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Edición -->
+<div id="modalEditar" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Overlay -->
+        <div class="fixed inset-0 transition-opacity bg-black/60" onclick="cerrarModal()"></div>
+
+        <!-- Contenido Modal -->
+        <div class="inline-block w-full max-w-lg p-8 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[30px] border border-primary/20 relative">
+            <h3 class="font-serif text-2xl font-bold text-dark mb-2">Editar Reserva</h3>
+            <p id="modalIdReserva" class="text-[10px] uppercase tracking-widest font-bold text-primary mb-8"></p>
+            
+            <form id="formEditar" asp-action="Editar" method="post" onsubmit="return confirmarEdicion(event)" class="space-y-6">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="edit_id" name="Id" />
+                <input type="hidden" id="edit_email" name="Email" />
+                <input type="hidden" id="edit_idReserva" name="IdReserva" />
+                <input type="hidden" id="edit_turno" name="Turno" />
+
+                <!-- Nombre -->
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase tracking-widest font-bold text-dark/40 ml-1">Nombre del Cliente</label>
+                    <input type="text" id="edit_nombre" name="Nombre" required class="w-full bg-secondary/30 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-dark font-medium" />
+                </div>
+
+                <!-- Teléfono -->
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase tracking-widest font-bold text-dark/40 ml-1">Teléfono</label>
+                    <div class="flex gap-2">
+                        <select id="edit_prefijo" class="bg-secondary/30 border-none rounded-2xl px-3 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-dark font-medium cursor-pointer">
+                            <option value="+34">🇪🇸 +34</option>
+                            <option value="+351">🇵🇹 +351</option>
+                            <option value="+33">🇫🇷 +33</option>
+                            <option value="+39">🇮🇹 +39</option>
+                            <option value="+44">🇬🇧 +44</option>
+                            <option value="+49">🇩🇪 +49</option>
+                            <option value="+1">🇺🇸 +1</option>
+                            <option value="+52">🇲🇽 +52</option>
+                            <option value="+57">🇨🇴 +57</option>
+                            <option value="+54">🇦🇷 +54</option>
+                            <option value="+56">🇨🇱 +56</option>
+                            <option value="+55">🇧🇷 +55</option>
+                        </select>
+                        <input type="text" id="edit_telefono_num" required class="flex-1 bg-secondary/30 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-dark font-medium" />
+                    </div>
+                    <input type="hidden" id="edit_telefono" name="Telefono" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Fecha -->
+                    <div class="space-y-1">
+                        <label class="text-[9px] uppercase tracking-widest font-bold text-dark/40 ml-1">Fecha</label>
+                        <input type="date" id="edit_fecha" name="Fecha" required class="w-full bg-secondary/30 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-dark font-medium" />
+                    </div>
+                    <!-- Hora -->
+                    <div class="space-y-1">
+                        <label class="text-[9px] uppercase tracking-widest font-bold text-dark/40 ml-1">Hora</label>
+                        <input type="text" id="edit_hora" name="Hora" required class="w-full bg-secondary/30 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-dark font-medium" />
+                    </div>
+                </div>
+
+                <!-- Personas -->
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase tracking-widest font-bold text-dark/40 ml-1">Número de Personas</label>
+                    <input type="number" id="edit_personas" name="Personas" min="1" max="20" required class="w-full bg-secondary/30 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-dark font-medium" />
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="flex-1 bg-dark text-white py-4 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all shadow-lg">
+                        Guardar Cambios
+                    </button>
+                    <button type="button" onclick="cerrarModal()" class="flex-1 bg-gray-100 text-gray-500 py-4 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 transition-all">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Filtro Fechas -->
+<div id="modalFiltro" class="fixed inset-0 z-[110] hidden">
+    <div class="absolute inset-0 bg-dark/40 backdrop-blur-sm" onclick="cerrarModalFiltro()"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
+        <div class="bg-white rounded-[32px] p-8 md:p-10 shadow-2xl relative">
+            <button onclick="cerrarModalFiltro()" class="absolute top-6 right-6 text-gray-400 hover:text-dark transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h3 class="font-serif text-2xl font-bold text-dark mb-2">Filtrar por Fechas</h3>
+            <p class="text-gray-500 text-xs mb-8">Selecciona un rango para visualizar las reservas.</p>
+            
+            <form asp-action="Gestion" method="get" id="formFiltro" class="space-y-6">
+                <input type="hidden" name="sortOrder" value="@Model.SortOrder" />
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[9px] uppercase tracking-widest font-bold text-dark/40 ml-1">Desde</label>
+                        <div class="relative group">
+                            <input type="text" id="filtro_inicio" name="fechaInicio" value="@(Model.FechaInicio?.ToString("dd/MM/yyyy"))" placeholder="DD/MM/AAAA" class="w-full bg-secondary/30 border-none rounded-2xl px-5 py-3 pr-12 focus:ring-2 focus:ring-primary/20 transition-all text-dark font-medium date-mask" />
+                            <button type="button" onclick="this.nextElementSibling.showPicker()" class="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-primary transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                            <input type="date" class="absolute inset-0 opacity-0 pointer-events-none" onchange="sincronizarFecha(this, 'filtro_inicio')" />
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] uppercase tracking-widest font-bold text-dark/40 ml-1">Hasta</label>
+                        <div class="relative group">
+                            <input type="text" id="filtro_fin" name="fechaFin" value="@(Model.FechaFin?.ToString("dd/MM/yyyy"))" placeholder="DD/MM/AAAA" class="w-full bg-secondary/30 border-none rounded-2xl px-5 py-3 pr-12 focus:ring-2 focus:ring-primary/20 transition-all text-dark font-medium date-mask" />
+                            <button type="button" onclick="this.nextElementSibling.showPicker()" class="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-primary transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                            <input type="date" class="absolute inset-0 opacity-0 pointer-events-none" onchange="sincronizarFecha(this, 'filtro_fin')" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="flex-1 bg-dark text-white py-4 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all shadow-lg">
+                        Filtrar
+                    </button>
+                    <button type="button" onclick="limpiarFiltro()" class="flex-1 bg-gray-100 text-gray-500 py-4 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 transition-all">
+                        Limpiar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Calendario -->
+<div id="modalCalendario" class="fixed inset-0 z-[120] hidden">
+    <div class="absolute inset-0 bg-dark/60 backdrop-blur-md" onclick="cerrarCalendario()"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl p-4">
+        <div class="bg-white rounded-[40px] p-8 shadow-2xl relative overflow-hidden">
+            <!-- Decoración de fondo -->
+            <div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+            
+            <div class="relative">
+                <div class="flex justify-between items-center mb-8">
+                    <div class="relative group/title cursor-pointer" onclick="document.getElementById('cal-jump-input').showPicker()">
+                        <h3 class="font-serif text-3xl font-bold text-dark group-hover/title:text-primary transition-colors flex items-center gap-2">
+                            Agenda de Reservas
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-0 group-hover/title:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </h3>
+                        <p class="text-gray-400 text-xs mt-1 uppercase tracking-widest font-bold" id="cal-month-year"></p>
+                        <!-- Input oculto para salto rápido -->
+                        <input type="month" id="cal-jump-input" class="absolute inset-0 opacity-0 cursor-pointer pointer-events-none" onchange="saltarAFfecha(this.value)" />
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="cambiarMes(-1)" class="p-3 rounded-2xl bg-secondary/50 hover:bg-primary hover:text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <button onclick="cambiarMes(1)" class="p-3 rounded-2xl bg-secondary/50 hover:bg-primary hover:text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                        <button onclick="cerrarCalendario()" class="p-3 rounded-2xl text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all ml-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-2 mb-4">
+                    @foreach (var dia in new[] { "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom" })
+                    {
+                        <div class="text-center text-[10px] uppercase tracking-tighter font-black text-primary/40 py-2">@dia</div>
+                    }
+                </div>
+
+                <div id="calendar-grid" class="grid grid-cols-7 gap-3">
+                    <!-- Días generados por JS -->
+                </div>
+                
+                <div class="mt-8 flex items-center justify-between border-t border-secondary/30 pt-6">
+                    <div class="flex items-center gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-primary shadow-sm shadow-primary/40"></span> Con Reservas
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-gray-100"></span> Sin Reservas
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-red-100 border border-red-200"></span> Cerrado
+                        </div>
+                    </div>
+                    <button onclick="irAHoy()" class="text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:text-dark transition-colors">
+                        Ir a Hoy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // Configuración base de SweetAlert2 para el restaurante
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
+
+    const swalConfig = {
+        confirmButtonColor: '#1A1A1A',
+        cancelButtonColor: '#f3f4f6',
+        customClass: {
+            popup: 'rounded-[30px] border-none shadow-2xl',
+            confirmButton: 'rounded-xl px-8 py-3 text-[10px] font-bold uppercase tracking-widest',
+            cancelButton: 'rounded-xl px-8 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500'
+        }
+    };
+
+    // Datos del calendario desde el servidor
+    const conteosPorFecha = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ConteosPorFecha.ToDictionary(k => k.Key.ToString("yyyy-MM-dd"), v => v.Value)));
+    
+    let currentDate = new Date();
+
+    function abrirCalendario() {
+        document.getElementById('modalCalendario').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        renderCalendar();
+    }
+
+    function cerrarCalendario() {
+        document.getElementById('modalCalendario').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    function cambiarMes(delta) {
+        currentDate.setMonth(currentDate.getMonth() + delta);
+        renderCalendar();
+    }
+
+    function irAHoy() {
+        currentDate = new Date();
+        renderCalendar();
+    }
+
+    function saltarAFfecha(val) {
+        if (!val) return;
+        const [year, month] = val.split('-');
+        currentDate = new Date(year, month - 1, 1);
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('calendar-grid');
+        const monthYear = document.getElementById('cal-month-year');
+        grid.innerHTML = '';
+
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        // Localización del mes
+        const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        monthYear.innerText = `${nombresMeses[month]} ${year}`;
+
+        // Primer día del mes
+        const firstDay = new Date(year, month, 1);
+        // Ajuste para que lunes sea el primer día (0: Dom -> 6, 1: Lun -> 0)
+        let startDay = firstDay.getDay() - 1;
+        if (startDay === -1) startDay = 6;
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        // Espacios vacíos para el inicio
+        for (let i = 0; i < startDay; i++) {
+            grid.innerHTML += `<div class="h-16"></div>`;
+        }
+
+        // Días del mes
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            const dateObj = new Date(year, month, day);
+            const isClosed = dateObj.getDay() === 1; // 1 = Lunes
+            const count = conteosPorFecha[dateStr] || 0;
+            const isToday = today.getTime() === dateObj.getTime();
+            
+            const dayElement = document.createElement('div');
+            
+            let bgClass = 'bg-gray-50/50 hover:bg-gray-100';
+            let textClass = 'text-dark/40';
+            let borderClass = 'border-transparent';
+
+            if (isClosed) {
+                bgClass = 'bg-red-50/40 hover:bg-red-50';
+                textClass = 'text-red-300';
+                borderClass = 'border-red-100/50';
+            } else if (count > 0) {
+                bgClass = 'bg-primary/5 hover:bg-primary/10';
+                textClass = 'text-primary';
+                borderClass = 'border-primary/10';
+            }
+            
+            dayElement.className = `group relative h-16 rounded-2xl transition-all cursor-pointer flex flex-col items-center justify-center border
+                ${bgClass} ${borderClass}
+                ${isToday ? 'ring-2 ring-primary ring-offset-2' : ''}`;
+            
+            if (!isClosed) {
+                dayElement.onclick = () => filtrarPorDia(dateStr);
+            } else {
+                dayElement.style.cursor = 'not-allowed';
+                dayElement.title = 'Restaurante Cerrado';
+            }
+
+            dayElement.innerHTML = `
+                <span class="text-sm font-bold ${textClass}">${day}</span>
+                ${isClosed ? '<span class="text-[7px] uppercase font-black text-red-300/60 mt-0.5 tracking-tighter">Cerrado</span>' : ''}
+                ${count > 0 ? `
+                    <div class="absolute -top-1.5 -right-1.5 bg-primary text-white text-[8px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg shadow-primary/30 transform group-hover:scale-110 transition-transform">
+                        ${count}
+                    </div>
+                ` : ''}
+            `;
+            
+            grid.appendChild(dayElement);
+        }
+    }
+
+    function filtrarPorDia(fecha) {
+        // Redirigir a la gestión filtrando por este día específico
+        const url = `@Url.Action("Gestion", "Reservas")?fechaInicio=${fecha}&fechaFin=${fecha}`;
+        window.location.href = url;
+    }
+
+    function abrirModalFiltro() {
+        document.getElementById('modalFiltro').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarModalFiltro() {
+        document.getElementById('modalFiltro').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    function limpiarFiltro() {
+        // Redirigir a la gestión sin parámetros de fecha
+        window.location.href = '@Url.Action("Gestion", "Reservas", new { sortOrder = Model.SortOrder })';
+    }
+
+    function splitTelefono(telefonoFull) {
+        if (!telefonoFull) return { prefijo: '+34', numero: '' };
+        telefonoFull = telefonoFull.trim();
+        const prefijos = ['+351', '+34', '+33', '+39', '+44', '+49', '+52', '+57', '+54', '+56', '+55', '+1'];
+        for (const p of prefijos) {
+            if (telefonoFull.startsWith(p)) {
+                return {
+                    prefijo: p,
+                    numero: telefonoFull.substring(p.length).trim()
+                };
+            }
+        }
+        return { prefijo: '+34', numero: telefonoFull };
+    }
+
+    function abrirModalEditar(datos) {
+        document.getElementById('edit_id').value = datos.id;
+        document.getElementById('edit_idReserva').value = datos.idReserva;
+        document.getElementById('modalIdReserva').innerText = datos.idReserva;
+        document.getElementById('edit_nombre').value = datos.nombre;
+        document.getElementById('edit_email').value = datos.email;
+        
+        const telParsed = splitTelefono(datos.telefono);
+        document.getElementById('edit_prefijo').value = telParsed.prefijo;
+        document.getElementById('edit_telefono_num').value = telParsed.numero;
+        document.getElementById('edit_telefono').value = datos.telefono;
+        
+        document.getElementById('edit_fecha').value = datos.fecha;
+        document.getElementById('edit_personas').value = datos.personas;
+        document.getElementById('edit_turno').value = datos.turno;
+        document.getElementById('edit_hora').value = datos.hora;
+
+        document.getElementById('modalEditar').classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Bloquear scroll
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalEditar').classList.add('hidden');
+        document.body.style.overflow = 'auto'; // Restaurar scroll
+    }
+
+    function confirmarEdicion(event) {
+        event.preventDefault();
+        const form = event.target;
+        
+        const prefijo = document.getElementById('edit_prefijo').value;
+        const numero = document.getElementById('edit_telefono_num').value.trim();
+        document.getElementById('edit_telefono').value = prefijo + ' ' + numero;
+        
+        Swal.fire({
+            ...swalConfig,
+            title: '¿Guardar cambios?',
+            text: "Se actualizará la información de la reserva.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, guardar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+        return false;
+    }
+
+    function toggleLeyenda() {
+        const leyenda = document.getElementById('leyendaModificacion');
+        leyenda.classList.toggle('hidden');
+        
+        // Cerrar al hacer click fuera
+        if (!leyenda.classList.contains('hidden')) {
+            const closeHandler = (e) => {
+                if (!leyenda.contains(e.target) && !e.target.closest('button')) {
+                    leyenda.classList.add('hidden');
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 10);
+        }
+    }
+
+    function togglePapelera() {
+        const papelera = document.getElementById('seccion-papelera');
+        papelera.classList.toggle('hidden');
+        
+        if (!papelera.classList.contains('hidden')) {
+            document.getElementById('seccion-historial').classList.add('hidden');
+            document.getElementById('seccion-usuarios').classList.add('hidden');
+        }
+    }
+
+    function confirmarRestauracion(event) {
+        event.preventDefault();
+        const form = event.target;
+
+        Swal.fire({
+            ...swalConfig,
+            title: '¿Restaurar reserva?',
+            text: "La reserva volverá al listado activo.",
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, restaurar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+        return false;
+    }
+
+    function confirmarBorradoDefinitivo(event) {
+        event.preventDefault();
+        const form = event.target;
+
+        Swal.fire({
+            ...swalConfig,
+            title: '¡ADVERTENCIA!',
+            text: "Esta acción eliminará permanentemente los datos y no se podrán recuperar. ¿Estás completamente seguro?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Eliminar para siempre',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+        return false;
+    }
+
+    function confirmarBorrado(event, nombre) {
+        event.preventDefault();
+        const form = event.target;
+
+        Swal.fire({
+            ...swalConfig,
+            title: '¿Mover a la papelera?',
+            text: `La reserva de ${nombre} se enviará a la papelera.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+        return false;
+    }
+
+    // --- FUNCIONES DE EXPORTACIÓN ---
+
+    function toggleExportMenu() {
+        const menu = document.getElementById('menuExportar');
+        menu.classList.toggle('hidden');
+        
+        // Cerrar herramientas si está abierto
+        document.getElementById('menuHerramientas').classList.add('hidden');
+
+        // Cerrar al hacer clic fuera
+        if (!menu.classList.contains('hidden')) {
+            const closeHandler = (e) => {
+                const drop = document.getElementById('dropdownExportar');
+                if (drop && !drop.contains(e.target)) {
+                    menu.classList.add('hidden');
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 10);
+        }
+    }
+
+    function toggleHerramientasMenu() {
+        const menu = document.getElementById('menuHerramientas');
+        menu.classList.toggle('hidden');
+
+        // Cerrar exportar si está abierto
+        document.getElementById('menuExportar').classList.add('hidden');
+
+        if (!menu.classList.contains('hidden')) {
+            const closeHandler = (e) => {
+                const drop = document.getElementById('dropdownHerramientas');
+                if (drop && !drop.contains(e.target)) {
+                    menu.classList.add('hidden');
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 10);
+        }
+    }
+
+    function toggleHistorialDescargas() {
+        const historial = document.getElementById('seccion-historial');
+        historial.classList.toggle('hidden');
+        
+        // Ocultar papelera si se abre historial
+        if (!historial.classList.contains('hidden')) {
+            document.getElementById('seccion-papelera').classList.add('hidden');
+            document.getElementById('seccion-usuarios').classList.add('hidden');
+            document.getElementById('menuHerramientas').classList.add('hidden');
+        }
+    }
+
+    function toggleUsuarios() {
+        const usuarios = document.getElementById('seccion-usuarios');
+        usuarios.classList.toggle('hidden');
+        
+        // Ocultar otras secciones si se abre usuarios
+        if (!usuarios.classList.contains('hidden')) {
+            document.getElementById('seccion-papelera').classList.add('hidden');
+            document.getElementById('seccion-historial').classList.add('hidden');
+            document.getElementById('menuHerramientas').classList.add('hidden');
+        }
+    }
+
+    async function registrarDescargaEnServidor(formato, total, fInicio, fFin) {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        try {
+            const respuesta = await fetch('/Reservas/RegistrarDescarga', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({
+                    Formato: formato,
+                    TotalRegistros: total,
+                    FiltroFechaInicio: fInicio ? convertirADate(fInicio) : null,
+                    FiltroFechaFin: fFin ? convertirADate(fFin) : null
+                })
+            });
+            const data = await respuesta.json();
+            if (respuesta.ok && data.success) {
+                // Agregar fila dinámicamente al historial de descargas
+                agregarFilaHistorial({
+                    idFormateado: data.idFormateado,
+                    usuarioNombre: data.usuarioNombre,
+                    formato: formato,
+                    total: total,
+                    fInicio: fInicio,
+                    fFin: fFin
+                });
+            }
+        } catch (err) { console.error('Error al registrar log:', err); }
+    }
+
+    function agregarFilaHistorial(info) {
+        const tbody = document.querySelector('#seccion-historial tbody');
+        if (!tbody) return;
+
+        // Si existe la fila de "No hay registros", removerla
+        const filaVacia = tbody.querySelector('td[colspan="7"]');
+        if (filaVacia) {
+            filaVacia.parentElement.remove();
+        }
+
+        // Formatear fecha descarga a "dd/MM/yyyy HH:mm"
+        const ahora = new Date();
+        const dia = String(ahora.getDate()).padStart(2, '0');
+        const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+        const año = ahora.getFullYear();
+        const horas = String(ahora.getHours()).padStart(2, '0');
+        const minutos = String(ahora.getMinutes()).padStart(2, '0');
+        const fechaDescargaStr = `${dia}/${mes}/${año} ${horas}:${minutos}`;
+
+        // Color badge del formato
+        let formatoColorClass = 'bg-blue-100 text-blue-600';
+        if (info.formato === 'pdf') {
+            formatoColorClass = 'bg-red-100 text-red-600';
+        } else if (info.formato === 'excel') {
+            formatoColorClass = 'bg-green-100 text-green-600';
+        }
+
+        // Filtro string
+        let filtroStr = 'Sin filtros';
+        if (info.fInicio || info.fFin) {
+            const formatFiltro = (f) => {
+                if (!f) return '...';
+                const parts = f.split('/');
+                if (parts.length === 3) return `${parts[0]}/${parts[1]}`;
+                return f;
+            };
+            filtroStr = `${formatFiltro(info.fInicio)} - ${formatFiltro(info.fFin)}`;
+        }
+
+        // Crear la nueva fila
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-secondary/20 transition-colors';
+        tr.innerHTML = `
+            <td class="px-8 py-4 font-bold text-primary">${info.idFormateado}</td>
+            <td class="px-8 py-4 text-gray-500">${fechaDescargaStr}</td>
+            <td class="px-8 py-4 font-semibold text-dark">${info.usuarioNombre}</td>
+            <td class="px-8 py-4">
+                <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase ${formatoColorClass}">
+                    ${info.formato}
+                </span>
+            </td>
+            <td class="px-8 py-4 font-bold">${info.total}</td>
+            <td class="px-8 py-4 text-[10px] text-gray-400">${filtroStr}</td>
+            <td class="px-8 py-4 text-center">
+                <span class="flex items-center justify-center gap-1.5 text-green-600 font-bold text-[9px] uppercase tracking-tighter">
+                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                    Completado
+                </span>
+            </td>
+        `;
+
+        // Insertar al inicio de la tabla (prepend)
+        tbody.insertBefore(tr, tbody.firstChild);
+    }
+
+    function convertirADate(str) {
+        if (!str) return null;
+        const [d, m, y] = str.split('/');
+        return `${y}-${m}-${d}`;
+    }
+
+    async function exportarFormato(tipo) {
+        const menu = document.getElementById('menuExportar');
+        let fechaInicio = document.getElementById('export_inicio').value;
+        let fechaFin = document.getElementById('export_fin').value;
+        
+        // Función de validación de fecha real
+        const esFechaValida = (f) => {
+            if (!f) return true;
+            const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            if (!regex.test(f)) return false;
+            
+            const [_, d, m, y] = f.match(regex);
+            const dia = parseInt(d);
+            const mes = parseInt(m);
+            const anio = parseInt(y);
+            
+            const date = new Date(anio, mes - 1, dia);
+            return date.getFullYear() == anio && date.getMonth() == mes - 1 && date.getDate() == dia;
+        };
+
+        // Validar formato y existencia
+        if (!esFechaValida(fechaInicio) || !esFechaValida(fechaFin)) {
+            Swal.fire({
+                ...swalConfig,
+                title: 'Fecha Inválida',
+                text: 'Por favor, introduce una fecha real en formato DD/MM/AAAA (ej: 30/05/2026).',
+                icon: 'error'
+            });
+            return;
+        }
+
+        // Validar rango lógico
+        const parsearFecha = (f) => {
+            if(!f) return null;
+            const [d, m, y] = f.split('/');
+            return new Date(y, m - 1, d);
+        };
+
+        const dInicio = parsearFecha(fechaInicio);
+        const dFin = parsearFecha(fechaFin);
+
+        if (dInicio && dFin && dInicio > dFin) {
+            Swal.fire({
+                ...swalConfig,
+                title: 'Rango Incorrecto',
+                text: 'La fecha de inicio no puede ser posterior a la fecha de fin.',
+                icon: 'warning'
+            });
+            return;
+        }
+
+        // Convertir formato DD/MM/AAAA a AAAA-MM-DD para el servidor
+        const convertirFecha = (f) => {
+            if(!f) return "";
+            const parts = f.split('/');
+            if(parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            return f;
+        };
+
+        const fInicioISO = convertirFecha(fechaInicio);
+        const fFinISO = convertirFecha(fechaFin);
+
+        menu.classList.add('hidden');
+        
+        let datosAExportar = null;
+
+        if (fInicioISO || fFinISO) {
+            try {
+                document.body.style.cursor = 'wait';
+                const response = await fetch(`@Url.Action("GetReservasJSON", "Reservas")?inicio=${fInicioISO}&fin=${fFinISO}`);
+                if (!response.ok) throw new Error("Error al obtener datos");
+                datosAExportar = await response.json();
+            } catch (error) {
+                Swal.fire({
+                    ...swalConfig,
+                    title: 'Error',
+                    text: 'Hubo un problema al conectar con el servidor.',
+                    icon: 'error'
+                });
+                console.error(error);
+            } finally {
+                document.body.style.cursor = 'default';
+            }
+        }
+
+        if ((fechaInicio || fechaFin) && (!datosAExportar || datosAExportar.length === 0)) {
+            Swal.fire({
+                ...swalConfig,
+                title: 'Sin Resultados',
+                text: 'No se encontraron reservas en el periodo seleccionado.',
+                icon: 'info'
+            });
+            return;
+        }
+
+        switch(tipo) {
+            case 'pdf':
+                await generarPDF(datosAExportar);
+                break;
+            case 'excel':
+                await generarExcel(datosAExportar);
+                break;
+            case 'csv':
+                generarCSV(datosAExportar);
+                break;
+            case 'svg':
+                generarSVG(datosAExportar);
+                break;
+        }
+    }
+
+    function cargarScript(url) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = url;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    async function generarPDF(datosExtra = null) {
+        if (typeof jspdf === 'undefined') {
+            await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+            await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js');
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(20);
+        doc.setTextColor(26, 26, 26);
+        doc.text("REPORTE DE RESERVAS", 14, 20);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(197, 168, 128);
+        const subtitulo = datosExtra ? "Filtro personalizado aplicado" : "Vista actual de la gestión";
+        doc.text(`${subtitulo} | Generado: ${new Date().toLocaleString()}`, 14, 28);
+
+        const config = {
+            startY: 35,
+            theme: 'striped',
+            headStyles: { fillColor: [26, 26, 26], textColor: [255, 255, 255], fontSize: 9, halign: 'center' },
+            bodyStyles: { fontSize: 8, textColor: [50, 50, 50] },
+            alternateRowStyles: { fillColor: [249, 246, 240] },
+            margin: { left: 14, right: 14 }
+        };
+
+        if (datosExtra) {
+            // Generar desde los datos JSON recibidos del servidor
+            // IMPORTANTE: Los nombres de los campos deben coincidir con el JSON (camelCase por defecto en .NET)
+            doc.autoTable({
+                ...config,
+                head: [['ID', 'Fecha', 'Hora', 'Cliente', 'Email', 'Teléfono', 'Pers.', 'Turno']],
+                body: datosExtra.map(r => [
+                    r.idReserva || r.IdReserva, 
+                    r.fecha || r.Fecha, 
+                    r.hora || r.Hora, 
+                    r.nombre || r.Nombre, 
+                    r.email || r.Email, 
+                    r.telefono || r.Telefono,
+                    r.personas || r.Personas, 
+                    r.turno || r.Turno
+                ])
+            });
+        } else {
+            // Generar desde la tabla HTML actual
+            doc.autoTable({
+                ...config,
+                html: '#tablaReservas',
+                columns: [
+                    { header: 'ID', dataKey: 0 },
+                    { header: 'Fecha', dataKey: 1 },
+                    { header: 'Hora', dataKey: 2 },
+                    { header: 'Cliente', dataKey: 3 },
+                    { header: 'Email', dataKey: 4 },
+                    { header: 'Teléfono', dataKey: 5 },
+                    { header: 'Pers.', dataKey: 6 },
+                    { header: 'Turno', dataKey: 7 }
+                ],
+                didParseCell: function(data) {
+                    if (data.section === 'body') {
+                        if (data.cell.text && data.cell.text.length > 0) {
+                            data.cell.text = [data.cell.text[0].split('\n')[0].trim()];
+                        }
+                    }
+                }
+            });
+        }
+
+        doc.save(`Reservas_${new Date().toISOString().slice(0,10)}.pdf`);
+
+        // Registrar en historial
+        const numFilas = datosExtra ? datosExtra.length : document.querySelectorAll('#tablaReservas tbody tr:not(.hidden)').length;
+        registrarDescargaEnServidor('pdf', numFilas, document.getElementById('export_inicio').value, document.getElementById('export_fin').value);
+    }
+
+    async function generarExcel(datosExtra = null) {
+        if (typeof XLSX === 'undefined') {
+            await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+        }
+
+        let ws;
+        if (datosExtra) {
+            ws = XLSX.utils.json_to_sheet(datosExtra);
+        } else {
+            const table = document.getElementById('tablaReservas');
+            const clone = table.cloneNode(true);
+            clone.querySelectorAll('tr').forEach(tr => {
+                if (tr.lastElementChild) tr.removeChild(tr.lastElementChild);
+            });
+            ws = XLSX.utils.table_to_sheet(clone);
+        }
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Reservas");
+        XLSX.writeFile(wb, `Reservas_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+        // Registrar en historial
+        const numFilas = datosExtra ? datosExtra.length : document.querySelectorAll('#tablaReservas tbody tr:not(.hidden)').length;
+        registrarDescargaEnServidor('excel', numFilas, document.getElementById('export_inicio').value, document.getElementById('export_fin').value);
+    }
+
+    function generarCSV(datosExtra = null) {
+        let csv = [];
+        
+        if (datosExtra) {
+            const headers = Object.keys(datosExtra[0]);
+            csv.push(headers.join(","));
+            datosExtra.forEach(r => {
+                csv.push(headers.map(h => `"${r[h]}"`).join(","));
+            });
+        } else {
+            const table = document.getElementById('tablaReservas');
+            const rows = table.querySelectorAll("tr");
+            for (let i = 0; i < rows.length; i++) {
+                const row = [], cols = rows[i].querySelectorAll("td, th");
+                for (let j = 0; j < cols.length - 1; j++) {
+                    let text = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, " ").trim();
+                    row.push('"' + text + '"');
+                }
+                csv.push(row.join(","));
+            }
+        }
+
+        const blob = new Blob(["\ufeff" + csv.join("\n")], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Reservas_${new Date().toISOString().slice(0,10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+
+        // Registrar en historial
+        const numFilas = datosExtra ? datosExtra.length : document.querySelectorAll('#tablaReservas tbody tr:not(.hidden)').length;
+        registrarDescargaEnServidor('csv', numFilas, document.getElementById('export_inicio').value, document.getElementById('export_fin').value);
+    
+        document.body.removeChild(link);
+    }
+
+    function generarSVG(datosExtra = null) {
+        // Crear un SVG simple con los datos en formato texto vectorial
+        const filas = datosExtra || Array.from(document.querySelectorAll('#tablaReservas tbody tr:not(.hidden)')).map(tr => Array.from(tr.cells).slice(0, -1).map(c => c.innerText.trim()));
+        
+        let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="${filas.length * 25 + 100}">
+            <rect width="100%" height="100%" fill="#ffffff"/>
+            <text x="20" y="40" font-family="Serif" font-size="24" font-weight="bold" fill="#1A1A1A">REPORTE DE RESERVAS - VECTORIAL</text>
+            <text x="20" y="70" font-family="sans-serif" font-size="12" fill="#C5A880">Generado: ${new Date().toLocaleString()}</text>`;
+        
+        let y = 110;
+        filas.forEach((fila, i) => {
+            const texto = Array.isArray(fila) ? fila.join(" | ") : `${fila.idReserva || fila.IdReserva} | ${fila.nombre || fila.Nombre} | ${fila.telefono || fila.Telefono} | ${fila.fecha || fila.Fecha}`;
+            svgContent += `<text x="20" y="${y}" font-family="monospace" font-size="10" fill="#333333">${texto}</text>`;
+            y += 25;
+        });
+        
+        svgContent += `</svg>`;
+
+        const blob = new Blob([svgContent], {type: 'image/svg+xml;charset=utf-8'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Reservas_${new Date().toISOString().slice(0,10)}.svg`;
+        link.click();
+
+        // Registrar en historial
+        registrarDescargaEnServidor('svg', filas.length, document.getElementById('export_inicio').value, document.getElementById('export_fin').value);
+    }
+
+    // --- LÓGICA DE MÁSCARA DE FECHA (ESCRITURA MANUAL) ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // Alerta de login exitoso si proviene de AuthController.js
+        const mostrarLoginExito = sessionStorage.getItem('mostrar_login_exito');
+        if (mostrarLoginExito === 'true') {
+            const ultimoAccesoMsg = sessionStorage.getItem('login_ultimo_acceso') || 'Primer acceso registrado.';
+            sessionStorage.removeItem('mostrar_login_exito');
+            sessionStorage.removeItem('login_ultimo_acceso');
+            
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                showCloseButton: true,
+                showConfirmButton: false,
+                timer: 60000, // Máximo 1 minuto
+                timerProgressBar: true,
+                icon: 'success',
+                title: 'Sesión iniciada correctamente',
+                html: `<div style="font-size: 11px; color: #6b7280; font-weight: 300; margin-top: 4px; text-align: left;">${ultimoAccesoMsg}</div>`,
+                customClass: {
+                    popup: 'rounded-2xl border border-primary/20 shadow-xl font-sans',
+                    title: 'text-sm font-bold text-dark text-left'
+                }
+            });
+        }
+
+        const dateInputs = document.querySelectorAll('.date-mask');
+        
+        dateInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                let v = e.target.value.replace(/\D/g, '').slice(0, 8);
+                if (v.length >= 5) {
+                    v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+                } else if (v.length >= 3) {
+                    v = v.slice(0, 2) + '/' + v.slice(2);
+                }
+                e.target.value = v;
+            });
+
+            // Validación simple al perder el foco
+            input.addEventListener('blur', (e) => {
+                const val = e.target.value;
+                if (val && val.length < 10) {
+                    // Si la fecha está incompleta, avisar o limpiar (opcional)
+                    // console.log("Fecha incompleta");
+                }
+            });
+        });
+    });
+
+    // Sincronizar el input invisible de calendario con el campo de texto manual
+    function sincronizarFecha(picker, textInputId) {
+        if (!picker.value) return;
+        const [year, month, day] = picker.value.split('-');
+        const formatted = `${day}/${month}/${year}`;
+        document.getElementById(textInputId).value = formatted;
+        
+        // Trigger input event to ensure mask and other logic updates
+        document.getElementById(textInputId).dispatchEvent(new Event('input'));
+    }
+</script>
