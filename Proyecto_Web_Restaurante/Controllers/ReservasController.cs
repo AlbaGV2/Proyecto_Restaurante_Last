@@ -5,9 +5,11 @@ using Restaurante.Data;
 using Restaurante.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Restaurante.Controllers
 {
+    [Authorize]
     public class ReservasController : Controller
     {
         private readonly RestauranteContext _context;
@@ -18,13 +20,14 @@ namespace Restaurante.Controllers
         }
 
         // GET: /Reservas
+        [AllowAnonymous]
         public IActionResult Index()
         {
             return View();
         }
 
         // GET: /Reservas/Gestion
-        public async Task<IActionResult> Gestion(string sortOrder, string searchString, int pagina = 1, DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        public async Task<IActionResult> Gestion(string sortOrder, string searchString, int pagina = 1, string fechaInicio = null, string fechaFin = null)
         {
             int registrosPorPagina = 10;
             
@@ -37,16 +40,43 @@ namespace Restaurante.Controllers
             ViewData["IdSortParm"] = sortOrder == "Id" ? "id_desc" : "Id";
             ViewData["PersonSortParm"] = sortOrder == "Personas" ? "person_desc" : "Personas";
 
+            // Parsear fechas de forma explícita en formato dd/MM/yyyy
+            DateTime? fInicioParsed = null;
+            if (!string.IsNullOrWhiteSpace(fechaInicio))
+            {
+                if (DateTime.TryParseExact(fechaInicio.Trim(), "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime parsed))
+                {
+                    fInicioParsed = parsed;
+                }
+                else if (DateTime.TryParse(fechaInicio, out DateTime parsedFallback))
+                {
+                    fInicioParsed = parsedFallback;
+                }
+            }
+
+            DateTime? fFinParsed = null;
+            if (!string.IsNullOrWhiteSpace(fechaFin))
+            {
+                if (DateTime.TryParseExact(fechaFin.Trim(), "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime parsed))
+                {
+                    fFinParsed = parsed;
+                }
+                else if (DateTime.TryParse(fechaFin, out DateTime parsedFallback))
+                {
+                    fFinParsed = parsedFallback;
+                }
+            }
+
             var query = _context.Reservas.Where(r => !r.IsDeleted).AsQueryable();
 
             // Filtrado por rango de fechas
-            if (fechaInicio.HasValue)
+            if (fInicioParsed.HasValue)
             {
-                query = query.Where(r => r.Fecha >= fechaInicio.Value.Date);
+                query = query.Where(r => r.Fecha >= fInicioParsed.Value.Date);
             }
-            if (fechaFin.HasValue)
+            if (fFinParsed.HasValue)
             {
-                query = query.Where(r => r.Fecha <= fechaFin.Value.Date);
+                query = query.Where(r => r.Fecha <= fFinParsed.Value.Date);
             }
 
             // Búsqueda por nombre o ID de reserva
@@ -94,8 +124,8 @@ namespace Restaurante.Controllers
                 SortOrder = sortOrder,
                 TotalReservas = totalCount,
                 ReservasEliminadas = eliminadas,
-                FechaInicio = fechaInicio,
-                FechaFin = fechaFin,
+                FechaInicio = fInicioParsed,
+                FechaFin = fFinParsed,
                 SearchString = searchString,
                 ConteosPorFecha = await _context.Reservas
                     .Where(r => !r.IsDeleted)
@@ -118,17 +148,29 @@ namespace Restaurante.Controllers
             if (log == null) return BadRequest();
 
             log.FechaDescarga = DateTime.Now;
-            log.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Desconocida";
-            
-            // Los campos UsuarioId y UsuarioNombre vendrán NULL de momento como pidió el usuario
+            if (User.Identity.IsAuthenticated)
+            {
+                var username = User.Identity.Name?.ToLower().Trim();
+                if (username == "mikel@restaurante.es")
+                {
+                    log.UsuarioId = 1;
+                    log.UsuarioNombre = "Mikel";
+                }
+                else if (username == "alba@restaurante.es")
+                {
+                    log.UsuarioId = 2;
+                    log.UsuarioNombre = "Alba";
+                }
+            }
             
             _context.LogDescargas.Add(log);
             await _context.SaveChangesAsync();
 
-            return Ok(new { success = true, idFormateado = log.IdFormateado });
+            return Ok(new { success = true, idFormateado = log.IdFormateado, usuarioNombre = log.UsuarioNombre ?? "Anónimo" });
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetHorasOcupadas(DateTime fecha)
         {
             var horasOcupadas = await _context.Reservas
@@ -142,6 +184,7 @@ namespace Restaurante.Controllers
         // POST: /Reservas/Crear
         // Recibe los datos del formulario en formato JSON desde el frontend
         [HttpPost]
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Crear([FromBody] Reserva reserva)
         {
@@ -282,7 +325,7 @@ namespace Restaurante.Controllers
         // POST: /Reservas/Editar/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Editar(int id, [Bind("Id,Nombre,Email,Fecha,Personas,Turno,Hora,IdReserva")] Reserva reserva)
+        public async Task<IActionResult> Editar(int id, [Bind("Id,Nombre,Email,Telefono,Fecha,Personas,Turno,Hora,IdReserva")] Reserva reserva)
         {
             if (id != reserva.Id) return NotFound();
 
@@ -380,6 +423,7 @@ namespace Restaurante.Controllers
                     r.Hora,
                     r.Nombre,
                     r.Email,
+                    r.Telefono,
                     r.Personas,
                     r.Turno
                 })

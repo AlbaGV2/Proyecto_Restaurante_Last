@@ -6,6 +6,9 @@
     <meta name="description" content="Restaurante Elegance — Alta gastronomía en Balmaseda, Bizkaia. Reserva tu mesa ahora.">
     <title>@ViewData["Title"] - Restaurante</title>
     
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <!-- Tailwind CSS (CDN para desarrollo) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -27,6 +30,12 @@
         @@keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to   { opacity: 1; transform: translateY(0); }
+        }
+        /* Corrección de etiquetas flotantes con autocompletado o contenido */
+        input:-webkit-autofill ~ label,
+        input:not(:placeholder-shown) ~ label {
+            transform: translateY(-1.5rem) !important;
+            font-size: 0.75rem !important;
         }
     </style>
     @await RenderSectionAsync("Styles", required: false)
@@ -50,7 +59,19 @@
                 <a asp-controller="Menu" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Menu" ? "text-primary" : "hover:text-primary") transition-colors hover:-translate-y-0.5 transform duration-300">Menú</a>
                 <a asp-controller="QuienesSomos" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "QuienesSomos" ? "text-primary" : "hover:text-primary") transition-colors hover:-translate-y-0.5 transform duration-300">Sobre Nosotros</a>
                 <a asp-controller="Contacto" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Contacto" ? "text-primary" : "hover:text-primary") transition-colors hover:-translate-y-0.5 transform duration-300">Contáctanos</a>
-                <a asp-controller="Reservas" asp-action="Index" class="bg-dark text-white px-6 py-3 rounded-full hover:bg-primary transition-colors duration-300">Haz Reserva</a>
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <a asp-controller="Reservas" asp-action="Gestion" class="bg-dark text-white px-6 py-3 rounded-full hover:bg-primary transition-colors duration-300">Gestor de Reservas</a>
+                    <div class="flex items-center gap-2 ml-4">
+                        <span class="text-[10px] font-semibold text-gray-500 tracking-wider">Hola, @User.Identity.Name.Split('@')[0]</span>
+                        <a asp-controller="Auth" asp-action="Logout" class="logout-link border border-primary text-primary px-4 py-2.5 rounded-full hover:bg-primary hover:text-white transition-all duration-300">Salir</a>
+                    </div>
+                }
+                else
+                {
+                    <a asp-controller="Reservas" asp-action="Index" class="bg-dark text-white px-6 py-3 rounded-full hover:bg-primary transition-colors duration-300">Haz Reserva</a>
+                    <a asp-controller="Auth" asp-action="Login" class="border border-primary text-primary px-4 py-2.5 rounded-full hover:bg-primary hover:text-white transition-all duration-300 ml-4">Login</a>
+                }
             </nav>
 
             <!-- Botón Menú Hamburguesa Mobile -->
@@ -68,7 +89,17 @@
         <a asp-controller="Menu" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Menu" ? "text-primary" : "hover:text-primary") transition-colors">Menú</a>
         <a asp-controller="QuienesSomos" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "QuienesSomos" ? "text-primary" : "hover:text-primary") transition-colors">Sobre Nosotros</a>
         <a asp-controller="Contacto" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Contacto" ? "text-primary" : "hover:text-primary") transition-colors">Contáctanos</a>
-        <a asp-controller="Reservas" asp-action="Index" class="bg-primary text-white font-sans text-sm font-bold tracking-widest px-8 py-4 rounded-full hover:bg-dark transition-colors mt-4">Haz Reserva</a>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <a asp-controller="Reservas" asp-action="Gestion" class="bg-primary text-white font-sans text-sm font-bold tracking-widest px-8 py-4 rounded-full hover:bg-dark transition-colors mt-4">Gestor de Reservas</a>
+            <span class="text-sm font-semibold text-gray-500 mt-2">Hola, @User.Identity.Name.Split('@')[0]</span>
+            <a asp-controller="Auth" asp-action="Logout" class="logout-link border border-primary text-primary px-6 py-3 rounded-full hover:bg-primary hover:text-white transition-all duration-300 text-sm mt-1">Salir</a>
+        }
+        else
+        {
+            <a asp-controller="Reservas" asp-action="Index" class="bg-primary text-white font-sans text-sm font-bold tracking-widest px-8 py-4 rounded-full hover:bg-dark transition-colors mt-4">Haz Reserva</a>
+            <a asp-controller="Auth" asp-action="Login" class="border border-primary text-primary px-6 py-3 rounded-full hover:bg-primary hover:text-white transition-all duration-300 text-sm mt-2">Login</a>
+        }
     </div>
 
     <!-- MAIN CONTENT -->
@@ -137,6 +168,26 @@
     <!-- Lógica base para Menú Mobile -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Alerta de logout exitoso si proviene de interceptar logout-link
+            const mostrarLogoutExito = sessionStorage.getItem('mostrar_logout_exito');
+            if (mostrarLogoutExito === 'true') {
+                sessionStorage.removeItem('mostrar_logout_exito');
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    showCloseButton: true,
+                    showConfirmButton: false,
+                    timer: 30000, // Máximo 30 segundos
+                    timerProgressBar: true,
+                    icon: 'success',
+                    title: 'Sesión cerrada correctamente',
+                    customClass: {
+                        popup: 'rounded-2xl border border-primary/20 shadow-xl font-sans',
+                        title: 'text-sm font-bold text-dark'
+                    }
+                });
+            }
+
             const menuBtn    = document.getElementById('header-menu-btn');
             const mobileMenu = document.getElementById('header-mobile-menu');
             const line1      = document.getElementById('h-line1');
@@ -168,6 +219,36 @@
                     }
                 });
             }
+
+            // Interceptar Cierre de Sesión con SweetAlert2
+            const logoutLinks = document.querySelectorAll('.logout-link');
+            logoutLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const url = link.getAttribute('href');
+                    
+                    Swal.fire({
+                        confirmButtonColor: '#1A1A1A',
+                        cancelButtonColor: '#f3f4f6',
+                        customClass: {
+                            popup: 'rounded-[30px] border-none shadow-2xl font-sans',
+                            confirmButton: 'rounded-xl px-8 py-3 text-[10px] font-bold uppercase tracking-widest',
+                            cancelButton: 'rounded-xl px-8 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500'
+                        },
+                        title: '¿Cerrar Sesión?',
+                        text: '¿Seguro que quieres cerrar sesión?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, salir',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            sessionStorage.setItem('mostrar_logout_exito', 'true');
+                            window.location.href = url;
+                        }
+                    });
+                });
+            });
         });
     </script>
     

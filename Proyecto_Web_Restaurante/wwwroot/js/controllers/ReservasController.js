@@ -118,17 +118,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function verificarDisponibilidadTurno() {
-      const turnoActual = ReservaModel.estado.turno || 'Comida';
-      const grid = turnoActual === 'Comida' ? gridComidas : gridCenas;
-      const hayDisponibles = grid.querySelectorAll('.slot-hora').length > 0;
+      const mensajeHTML = `
+        <div class="col-span-full py-12 text-center animate-on-scroll">
+            <p class="text-gray-400 font-serif italic text-lg mb-2">No hay horas disponibles en estos momentos</p>
+            <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-primary/60">Prueba con otro turno o fecha (Mínimo de anticipación: 1 hora)</p>
+        </div>
+      `;
 
-      if (!hayDisponibles) {
-          grid.innerHTML = `
-            <div class="col-span-full py-12 text-center animate-on-scroll">
-                <p class="text-gray-400 font-serif italic text-lg mb-2">No hay horas disponibles en estos momentos</p>
-                <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-primary/60">Prueba con otro turno o fecha</p>
-            </div>
-          `;
+      const hayComidas = gridComidas.querySelectorAll('.slot-hora').length > 0;
+      if (!hayComidas) {
+          gridComidas.innerHTML = mensajeHTML;
+      }
+
+      const hayCenas = gridCenas.querySelectorAll('.slot-hora').length > 0;
+      if (!hayCenas) {
+          gridCenas.innerHTML = mensajeHTML;
       }
   }
 
@@ -225,6 +229,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- Teléfono ---
+  const telefonoInput = document.getElementById('telefono');
+  const prefijoSelect = document.getElementById('prefijo');
+  const errorTelefono = document.getElementById('error-telefono');
+  
+  function actualizarTelefonoModel() {
+    const val = (telefonoInput.value ?? '').trim();
+    if (val) {
+      // Concatenate prefix and number without spaces to satisfy Phone validation
+      ReservaModel.actualizar('telefono', `${prefijoSelect.value}${val}`);
+    } else {
+      ReservaModel.actualizar('telefono', '');
+    }
+    actualizarBoton();
+  }
+
+  if (telefonoInput && prefijoSelect) {
+    telefonoInput.addEventListener('input', actualizarTelefonoModel);
+    prefijoSelect.addEventListener('change', actualizarTelefonoModel);
+  }
+
   // Activa/desactiva el botón Reservar según validez del modelo
   function actualizarBoton() {
     if (!btnReservar) return;
@@ -249,6 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function limpiarErrores() {
     if (errorNombre) { errorNombre.textContent = ''; errorNombre.classList.add('hidden'); }
     if (errorEmail)  { errorEmail.textContent  = ''; errorEmail.classList.add('hidden'); }
+    if (errorTelefono) { errorTelefono.textContent = ''; errorTelefono.classList.add('hidden'); }
     if (mensajeDiv)  { mensajeDiv.className = 'hidden'; mensajeDiv.textContent = ''; }
   }
 
@@ -260,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnReservar.textContent = 'Enviando...';
       btnReservar.disabled = true;
 
-      const { personas, fecha, turno, hora, nombre, email } = ReservaModel.estado;
+      const { personas, fecha, turno, hora, nombre, email, telefono } = ReservaModel.estado;
 
       // Obtener el token CSRF generado por ASP.NET Core
       const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
@@ -275,6 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({
             nombre,
             email,
+            telefono,
             fecha,
             personas: parseInt(personas, 10),
             turno,
@@ -290,6 +317,8 @@ document.addEventListener('DOMContentLoaded', () => {
           ReservaModel.limpiar();
           if (nombreInput) nombreInput.value = '';
           if (emailInput)  emailInput.value  = '';
+          if (telefonoInput) telefonoInput.value = '';
+          if (prefijoSelect) prefijoSelect.value = '+34';
           btnReservar.dataset.active = 'false';
         } else {
           // Error del servidor: mostrar errores por campo
@@ -304,9 +333,13 @@ document.addEventListener('DOMContentLoaded', () => {
               errorEmail.textContent = datos.errores.Email[0];
               errorEmail.classList.remove('hidden');
             }
+            if (datos.errores.Telefono && errorTelefono) {
+              errorTelefono.textContent = datos.errores.Telefono[0];
+              errorTelefono.classList.remove('hidden');
+            }
             // Otros errores (Fecha, Hora, etc.) se muestran en el mensaje general
             const otrosErrores = Object.entries(datos.errores)
-              .filter(([k]) => k !== 'Nombre' && k !== 'Email')
+              .filter(([k]) => k !== 'Nombre' && k !== 'Email' && k !== 'Telefono')
               .map(([, v]) => v[0])
               .join(' ');
             if (otrosErrores) mostrarMensaje(otrosErrores, false);

@@ -15,7 +15,8 @@ export const ReservaModel = {
     turno: 'Comida', // 'Comida' | 'Cena'
     hora: null,
     nombre: '',
-    email: ''
+    email: '',
+    telefono: ''
   },
 
   /** Guarda el estado actual en sessionStorage */
@@ -39,7 +40,7 @@ export const ReservaModel = {
   /** Borra los datos de reserva del sessionStorage */
   limpiar() {
     sessionStorage.removeItem(STORAGE_KEY);
-    this.estado = { personas: '2', fecha: '', turno: 'Comida', hora: null, nombre: '', email: '' };
+    this.estado = { personas: '2', fecha: '', turno: 'Comida', hora: null, nombre: '', email: '', telefono: '' };
   },
 
   /** Actualiza un campo del estado */
@@ -55,7 +56,8 @@ export const ReservaModel = {
       this.estado.turno &&
       this.estado.hora !== null &&
       this.estado.nombre.trim() !== '' &&
-      this.estado.email.trim() !== ''
+      this.estado.email.trim() !== '' &&
+      this.estado.telefono.trim() !== ''
     );
   }
 };

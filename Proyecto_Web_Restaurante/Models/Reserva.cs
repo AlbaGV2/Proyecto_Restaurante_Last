@@ -15,6 +15,11 @@ public class Reserva
     [StringLength(50, ErrorMessage = "El email no puede superar los 50 caracteres.")]
     public string Email { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "El teléfono es obligatorio.")]
+    [Phone(ErrorMessage = "El formato del teléfono no es válido.")]
+    [StringLength(15, ErrorMessage = "El teléfono no puede superar los 15 caracteres.")]
+    public string Telefono { get; set; } = string.Empty;
+
     [Required(ErrorMessage = "La fecha es obligatoria.")]
     public DateTime Fecha { get; set; }
 

@@ -48,7 +48,15 @@
     <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
         <h1 class="font-serif text-3xl md:text-4xl text-white font-bold tracking-wider mb-6">Gestor de Reservas</h1>
         <div class="w-16 h-0.5 bg-primary mx-auto mb-6"></div>
-        <p class="text-white/80 font-light tracking-widest uppercase text-sm">Administración de clientes y mesas</p>
+        <p class="text-white/80 font-light tracking-widest uppercase text-sm mb-8">Administración de clientes y mesas</p>
+        
+        <!-- Botón Nueva Reserva para Administrador/Camarero -->
+        <a asp-action="Index" class="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full text-xs font-bold tracking-[0.2em] uppercase hover:bg-white hover:text-dark transition-all duration-300 shadow-lg transform hover:-translate-y-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+            </svg>
+            Nueva Reserva
+        </a>
     </div>
 </div>
 
@@ -129,7 +137,14 @@
                         </button>
                         <div id="menuHerramientas" class="hidden absolute right-0 mt-2 w-72 rounded-3xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5 z-[150] border border-secondary overflow-hidden">
                             <div class="p-5 border-b border-secondary bg-secondary/20"><h4 class="text-[9px] font-black uppercase tracking-[0.2em] text-primary mb-1">Auditoría</h4></div>
-                            <div class="py-2"><button onclick="toggleHistorialDescargas()" class="flex items-center gap-3 w-full px-6 py-4 text-xs font-bold text-gray-700 hover:bg-secondary hover:text-primary transition-all uppercase tracking-widest group">Historial descargas</button></div>
+                            <div class="py-2 divide-y divide-gray-50">
+                                <button onclick="toggleHistorialDescargas()" class="flex items-center gap-3 w-full px-6 py-4 text-xs font-bold text-gray-700 hover:bg-secondary hover:text-primary transition-all uppercase tracking-widest group text-left">
+                                    Historial descargas
+                                </button>
+                                <button onclick="toggleUsuarios()" class="flex items-center gap-3 w-full px-6 py-4 text-xs font-bold text-gray-700 hover:bg-secondary hover:text-primary transition-all uppercase tracking-widest group text-left">
+                                    Usuarios
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -172,6 +187,7 @@
                             <th class="px-8 py-4">ID</th>
                             <th class="px-8 py-4">Eliminada el</th>
                             <th class="px-8 py-4">Cliente</th>
+                            <th class="px-8 py-4">Teléfono</th>
                             <th class="px-8 py-4">Email</th>
                             <th class="px-8 py-4 text-center">Acción</th>
                         </tr>
@@ -180,7 +196,7 @@
                         @if (!Model.ReservasEliminadas.Any())
                         {
                             <tr>
-                                <td colspan="5" class="px-8 py-10 text-center text-gray-400 italic">No hay reservas eliminadas recientemente.</td>
+                                <td colspan="6" class="px-8 py-10 text-center text-gray-400 italic">No hay reservas eliminadas recientemente.</td>
                             </tr>
                         }
                         else
@@ -191,6 +207,7 @@
                                     <td class="px-8 py-4 font-bold text-red-700">@r.IdReserva</td>
                                     <td class="px-8 py-4 text-xs text-gray-500">@(r.FechaEliminacion?.ToString("dd/MM HH:mm") ?? "-")</td>
                                     <td class="px-8 py-4 font-medium text-dark">@r.Nombre</td>
+                                    <td class="px-8 py-4 text-gray-500">@r.Telefono</td>
                                     <td class="px-8 py-4 text-gray-500">@r.Email</td>
                                     <td class="px-8 py-4 text-center">
                                         <div class="flex justify-center gap-2">
@@ -241,6 +258,7 @@
                         <tr class="bg-gray-50 text-[10px] uppercase tracking-widest font-bold text-gray-500 border-b border-gray-100">
                             <th class="px-8 py-4">ID</th>
                             <th class="px-8 py-4">Fecha Descarga</th>
+                            <th class="px-8 py-4">Usuario</th>
                             <th class="px-8 py-4">Formato</th>
                             <th class="px-8 py-4">Registros</th>
                             <th class="px-8 py-4">Filtro Aplicado</th>
@@ -251,7 +269,7 @@
                         @if (Model.LogDescargas == null || !Model.LogDescargas.Any())
                         {
                             <tr>
-                                <td colspan="6" class="px-8 py-10 text-center text-gray-400 italic">No hay registros de descargas todavía.</td>
+                                <td colspan="7" class="px-8 py-10 text-center text-gray-400 italic">No hay registros de descargas todavía.</td>
                             </tr>
                         }
                         else
@@ -261,6 +279,7 @@
                                 <tr class="hover:bg-secondary/20 transition-colors">
                                     <td class="px-8 py-4 font-bold text-primary">@log.IdFormateado</td>
                                     <td class="px-8 py-4 text-gray-500">@log.FechaDescarga.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="px-8 py-4 font-semibold text-dark">@(log.UsuarioNombre ?? "Anónimo")</td>
                                     <td class="px-8 py-4">
                                         <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase @(log.Formato == "pdf" ? "bg-red-100 text-red-600" : log.Formato == "excel" ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600")">
                                             @log.Formato
@@ -286,6 +305,64 @@
                                 </tr>
                             }
                         }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sección Control de Usuarios (Oculta por defecto) -->
+        <div id="seccion-usuarios" class="hidden mb-12 bg-white rounded-[30px] shadow-lg border border-primary/10 overflow-hidden transition-all duration-300">
+            <div class="bg-secondary/20 px-8 py-4 border-b border-primary/10 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <span class="p-2 bg-primary/10 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </span>
+                    <h3 class="font-serif text-lg font-bold text-dark">Personal Registrado (Camareros / Administradores)</h3>
+                </div>
+                <button onclick="toggleUsuarios()" class="text-gray-400 hover:text-dark transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 text-[10px] uppercase tracking-widest font-bold text-gray-500 border-b border-gray-100">
+                            <th class="px-8 py-4">Usuario</th>
+                            <th class="px-8 py-4">Nombre</th>
+                            <th class="px-8 py-4">Rol</th>
+                            <th class="px-8 py-4 text-center">Estado</th>
+                            <th class="px-8 py-4 text-center">Último Acceso</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 text-dark/80">
+                        <tr class="hover:bg-secondary/20 transition-colors">
+                            <td class="px-8 py-4 font-bold text-primary">mikel@restaurante.es</td>
+                            <td class="px-8 py-4 font-semibold text-dark">Mikel</td>
+                            <td class="px-8 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Administrador / Camarero</td>
+                            <td class="px-8 py-4 text-center">
+                                <span class="inline-flex items-center justify-center gap-1.5 text-green-600 font-bold text-[9px] uppercase tracking-tighter">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                    Activo
+                                </span>
+                            </td>
+                            <td class="px-8 py-4 text-center text-xs text-gray-400">Reciente (En línea)</td>
+                        </tr>
+                        <tr class="hover:bg-secondary/20 transition-colors">
+                            <td class="px-8 py-4 font-bold text-primary">alba@restaurante.es</td>
+                            <td class="px-8 py-4 font-semibold text-dark">Alba</td>
+                            <td class="px-8 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Administradora / Camarera</td>
+                            <td class="px-8 py-4 text-center">
+                                <span class="inline-flex items-center justify-center gap-1.5 text-green-600 font-bold text-[9px] uppercase tracking-tighter">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                    Activo
+                                </span>
+                            </td>
+                            <td class="px-8 py-4 text-center text-xs text-gray-400">Hace 2 horas</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -326,6 +403,7 @@
                                 </a>
                             </th>
                             <th class="px-8 py-6">Email</th>
+                            <th class="px-8 py-6">Teléfono</th>
                             <th class="px-8 py-6 text-center">
                                 <a asp-action="Gestion" asp-route-sortOrder="@ViewData["PersonSortParm"]" class="hover:text-primary transition-colors inline-flex items-center gap-2">
                                     Personas
@@ -376,6 +454,7 @@
                                     <td class="px-8 py-5">@reserva.Hora</td>
                                     <td class="px-8 py-5 font-bold text-dark">@reserva.Nombre</td>
                                     <td class="px-8 py-5 text-sm">@reserva.Email</td>
+                                    <td class="px-8 py-5 text-sm">@reserva.Telefono</td>
                                     <td class="px-8 py-5 text-center font-bold">@reserva.Personas</td>
                                     <td class="px-8 py-5 text-center">
                                         <span class="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest @(reserva.Turno.ToLower() == "comida" ? "bg-orange-100 text-orange-600" : "bg-blue-100 text-blue-600")">
@@ -410,6 +489,7 @@
                                                         idReserva: '@reserva.IdReserva',
                                                         nombre: '@reserva.Nombre',
                                                         email: '@reserva.Email',
+                                                        telefono: '@reserva.Telefono',
                                                         fecha: '@reserva.Fecha.ToString("yyyy-MM-dd")',
                                                         personas: '@reserva.Personas',
                                                         turno: '@reserva.Turno',
@@ -436,7 +516,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="9" class="px-8 py-20 text-center text-gray-400 italic">
+                                <td colspan="10" class="px-8 py-20 text-center text-gray-400 italic">
                                     No hay reservas registradas actualmente.
                                 </td>
                             </tr>
@@ -534,6 +614,29 @@
                 <div class="space-y-1">
                     <label class="text-[9px] uppercase tracking-widest font-bold text-dark/40 ml-1">Nombre del Cliente</label>
                     <input type="text" id="edit_nombre" name="Nombre" required class="w-full bg-secondary/30 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-dark font-medium" />
+                </div>
+
+                <!-- Teléfono -->
+                <div class="space-y-1">
+                    <label class="text-[9px] uppercase tracking-widest font-bold text-dark/40 ml-1">Teléfono</label>
+                    <div class="flex gap-2">
+                        <select id="edit_prefijo" class="bg-secondary/30 border-none rounded-2xl px-3 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-dark font-medium cursor-pointer">
+                            <option value="+34">🇪🇸 +34</option>
+                            <option value="+351">🇵🇹 +351</option>
+                            <option value="+33">🇫🇷 +33</option>
+                            <option value="+39">🇮🇹 +39</option>
+                            <option value="+44">🇬🇧 +44</option>
+                            <option value="+49">🇩🇪 +49</option>
+                            <option value="+1">🇺🇸 +1</option>
+                            <option value="+52">🇲🇽 +52</option>
+                            <option value="+57">🇨🇴 +57</option>
+                            <option value="+54">🇦🇷 +54</option>
+                            <option value="+56">🇨🇱 +56</option>
+                            <option value="+55">🇧🇷 +55</option>
+                        </select>
+                        <input type="text" id="edit_telefono_num" required class="flex-1 bg-secondary/30 border-none rounded-2xl px-5 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-dark font-medium" />
+                    </div>
+                    <input type="hidden" id="edit_telefono" name="Telefono" />
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -849,12 +952,33 @@
         window.location.href = '@Url.Action("Gestion", "Reservas", new { sortOrder = Model.SortOrder })';
     }
 
+    function splitTelefono(telefonoFull) {
+        if (!telefonoFull) return { prefijo: '+34', numero: '' };
+        telefonoFull = telefonoFull.trim();
+        const prefijos = ['+351', '+34', '+33', '+39', '+44', '+49', '+52', '+57', '+54', '+56', '+55', '+1'];
+        for (const p of prefijos) {
+            if (telefonoFull.startsWith(p)) {
+                return {
+                    prefijo: p,
+                    numero: telefonoFull.substring(p.length).trim()
+                };
+            }
+        }
+        return { prefijo: '+34', numero: telefonoFull };
+    }
+
     function abrirModalEditar(datos) {
         document.getElementById('edit_id').value = datos.id;
         document.getElementById('edit_idReserva').value = datos.idReserva;
         document.getElementById('modalIdReserva').innerText = datos.idReserva;
         document.getElementById('edit_nombre').value = datos.nombre;
         document.getElementById('edit_email').value = datos.email;
+        
+        const telParsed = splitTelefono(datos.telefono);
+        document.getElementById('edit_prefijo').value = telParsed.prefijo;
+        document.getElementById('edit_telefono_num').value = telParsed.numero;
+        document.getElementById('edit_telefono').value = datos.telefono;
+        
         document.getElementById('edit_fecha').value = datos.fecha;
         document.getElementById('edit_personas').value = datos.personas;
         document.getElementById('edit_turno').value = datos.turno;
@@ -872,6 +996,10 @@
     function confirmarEdicion(event) {
         event.preventDefault();
         const form = event.target;
+        
+        const prefijo = document.getElementById('edit_prefijo').value;
+        const numero = document.getElementById('edit_telefono_num').value.trim();
+        document.getElementById('edit_telefono').value = prefijo + ' ' + numero;
         
         Swal.fire({
             ...swalConfig,
@@ -908,6 +1036,11 @@
     function togglePapelera() {
         const papelera = document.getElementById('seccion-papelera');
         papelera.classList.toggle('hidden');
+        
+        if (!papelera.classList.contains('hidden')) {
+            document.getElementById('seccion-historial').classList.add('hidden');
+            document.getElementById('seccion-usuarios').classList.add('hidden');
+        }
     }
 
     function confirmarRestauracion(event) {
@@ -1019,6 +1152,19 @@
         // Ocultar papelera si se abre historial
         if (!historial.classList.contains('hidden')) {
             document.getElementById('seccion-papelera').classList.add('hidden');
+            document.getElementById('seccion-usuarios').classList.add('hidden');
+            document.getElementById('menuHerramientas').classList.add('hidden');
+        }
+    }
+
+    function toggleUsuarios() {
+        const usuarios = document.getElementById('seccion-usuarios');
+        usuarios.classList.toggle('hidden');
+        
+        // Ocultar otras secciones si se abre usuarios
+        if (!usuarios.classList.contains('hidden')) {
+            document.getElementById('seccion-papelera').classList.add('hidden');
+            document.getElementById('seccion-historial').classList.add('hidden');
             document.getElementById('menuHerramientas').classList.add('hidden');
         }
     }
@@ -1026,7 +1172,7 @@
     async function registrarDescargaEnServidor(formato, total, fInicio, fFin) {
         const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
         try {
-            await fetch('/Reservas/RegistrarDescarga', {
+            const respuesta = await fetch('/Reservas/RegistrarDescarga', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1039,7 +1185,84 @@
                     FiltroFechaFin: fFin ? convertirADate(fFin) : null
                 })
             });
+            const data = await respuesta.json();
+            if (respuesta.ok && data.success) {
+                // Agregar fila dinámicamente al historial de descargas
+                agregarFilaHistorial({
+                    idFormateado: data.idFormateado,
+                    usuarioNombre: data.usuarioNombre,
+                    formato: formato,
+                    total: total,
+                    fInicio: fInicio,
+                    fFin: fFin
+                });
+            }
         } catch (err) { console.error('Error al registrar log:', err); }
+    }
+
+    function agregarFilaHistorial(info) {
+        const tbody = document.querySelector('#seccion-historial tbody');
+        if (!tbody) return;
+
+        // Si existe la fila de "No hay registros", removerla
+        const filaVacia = tbody.querySelector('td[colspan="7"]');
+        if (filaVacia) {
+            filaVacia.parentElement.remove();
+        }
+
+        // Formatear fecha descarga a "dd/MM/yyyy HH:mm"
+        const ahora = new Date();
+        const dia = String(ahora.getDate()).padStart(2, '0');
+        const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+        const año = ahora.getFullYear();
+        const horas = String(ahora.getHours()).padStart(2, '0');
+        const minutos = String(ahora.getMinutes()).padStart(2, '0');
+        const fechaDescargaStr = `${dia}/${mes}/${año} ${horas}:${minutos}`;
+
+        // Color badge del formato
+        let formatoColorClass = 'bg-blue-100 text-blue-600';
+        if (info.formato === 'pdf') {
+            formatoColorClass = 'bg-red-100 text-red-600';
+        } else if (info.formato === 'excel') {
+            formatoColorClass = 'bg-green-100 text-green-600';
+        }
+
+        // Filtro string
+        let filtroStr = 'Sin filtros';
+        if (info.fInicio || info.fFin) {
+            const formatFiltro = (f) => {
+                if (!f) return '...';
+                const parts = f.split('/');
+                if (parts.length === 3) return `${parts[0]}/${parts[1]}`;
+                return f;
+            };
+            filtroStr = `${formatFiltro(info.fInicio)} - ${formatFiltro(info.fFin)}`;
+        }
+
+        // Crear la nueva fila
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-secondary/20 transition-colors';
+        tr.innerHTML = `
+            <td class="px-8 py-4 font-bold text-primary">${info.idFormateado}</td>
+            <td class="px-8 py-4 text-gray-500">${fechaDescargaStr}</td>
+            <td class="px-8 py-4 font-semibold text-dark">${info.usuarioNombre}</td>
+            <td class="px-8 py-4">
+                <span class="px-2 py-1 rounded-md text-[9px] font-black uppercase ${formatoColorClass}">
+                    ${info.formato}
+                </span>
+            </td>
+            <td class="px-8 py-4 font-bold">${info.total}</td>
+            <td class="px-8 py-4 text-[10px] text-gray-400">${filtroStr}</td>
+            <td class="px-8 py-4 text-center">
+                <span class="flex items-center justify-center gap-1.5 text-green-600 font-bold text-[9px] uppercase tracking-tighter">
+                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                    Completado
+                </span>
+            </td>
+        `;
+
+        // Insertar al inicio de la tabla (prepend)
+        tbody.insertBefore(tr, tbody.firstChild);
     }
 
     function convertirADate(str) {
@@ -1202,13 +1425,14 @@
             // IMPORTANTE: Los nombres de los campos deben coincidir con el JSON (camelCase por defecto en .NET)
             doc.autoTable({
                 ...config,
-                head: [['ID', 'Fecha', 'Hora', 'Cliente', 'Email', 'Pers.', 'Turno']],
+                head: [['ID', 'Fecha', 'Hora', 'Cliente', 'Email', 'Teléfono', 'Pers.', 'Turno']],
                 body: datosExtra.map(r => [
                     r.idReserva || r.IdReserva, 
                     r.fecha || r.Fecha, 
                     r.hora || r.Hora, 
                     r.nombre || r.Nombre, 
                     r.email || r.Email, 
+                    r.telefono || r.Telefono,
                     r.personas || r.Personas, 
                     r.turno || r.Turno
                 ])
@@ -1224,8 +1448,9 @@
                     { header: 'Hora', dataKey: 2 },
                     { header: 'Cliente', dataKey: 3 },
                     { header: 'Email', dataKey: 4 },
-                    { header: 'Pers.', dataKey: 5 },
-                    { header: 'Turno', dataKey: 6 }
+                    { header: 'Teléfono', dataKey: 5 },
+                    { header: 'Pers.', dataKey: 6 },
+                    { header: 'Turno', dataKey: 7 }
                 ],
                 didParseCell: function(data) {
                     if (data.section === 'body') {
@@ -1319,7 +1544,7 @@
         
         let y = 110;
         filas.forEach((fila, i) => {
-            const texto = Array.isArray(fila) ? fila.join(" | ") : `${fila.IdReserva} | ${fila.Nombre} | ${fila.Fecha}`;
+            const texto = Array.isArray(fila) ? fila.join(" | ") : `${fila.idReserva || fila.IdReserva} | ${fila.nombre || fila.Nombre} | ${fila.telefono || fila.Telefono} | ${fila.fecha || fila.Fecha}`;
             svgContent += `<text x="20" y="${y}" font-family="monospace" font-size="10" fill="#333333">${texto}</text>`;
             y += 25;
         });
@@ -1339,6 +1564,30 @@
 
     // --- LÓGICA DE MÁSCARA DE FECHA (ESCRITURA MANUAL) ---
     document.addEventListener('DOMContentLoaded', () => {
+        // Alerta de login exitoso si proviene de AuthController.js
+        const mostrarLoginExito = sessionStorage.getItem('mostrar_login_exito');
+        if (mostrarLoginExito === 'true') {
+            const ultimoAccesoMsg = sessionStorage.getItem('login_ultimo_acceso') || 'Primer acceso registrado.';
+            sessionStorage.removeItem('mostrar_login_exito');
+            sessionStorage.removeItem('login_ultimo_acceso');
+            
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                showCloseButton: true,
+                showConfirmButton: false,
+                timer: 60000, // Máximo 1 minuto
+                timerProgressBar: true,
+                icon: 'success',
+                title: 'Sesión iniciada correctamente',
+                html: `<div style="font-size: 11px; color: #6b7280; font-weight: 300; margin-top: 4px; text-align: left;">${ultimoAccesoMsg}</div>`,
+                customClass: {
+                    popup: 'rounded-2xl border border-primary/20 shadow-xl font-sans',
+                    title: 'text-sm font-bold text-dark text-left'
+                }
+            });
+        }
+
         const dateInputs = document.querySelectorAll('.date-mask');
         
         dateInputs.forEach(input => {

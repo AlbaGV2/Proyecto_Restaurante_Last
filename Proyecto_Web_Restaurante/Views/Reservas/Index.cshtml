@@ -10,11 +10,6 @@
                 <h1 class="font-serif text-3xl md:text-4xl text-white font-bold tracking-wider mb-6">Reservas</h1>
                 <div class="w-16 h-0.5 bg-primary mx-auto mb-6"></div>
                 <p class="text-white/80 font-light tracking-widest uppercase text-sm">Asegure su mesa</p>
-                <div class="mt-8 flex gap-4">
-                    <a asp-action="Gestion" class="bg-white/10 hover:bg-white/20 text-white border border-white/30 px-6 py-2 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase transition-all backdrop-blur-sm">
-                        Gestor Reservas
-                    </a>
-                </div>
             </div>
         </div>
 
@@ -24,7 +19,7 @@
 
                 @Html.AntiForgeryToken()
 
-                <div class="text-center mb-16 animate-on-scroll relative" data-delay="0.1s">
+                <div class="text-center mb-16 animate-on-scroll relative z-20" data-delay="0.1s">
                     <h2 class="font-serif text-2xl md:text-3xl font-bold text-dark mb-4">Detalles de la Reserva</h2>
                     <p class="text-gray-500 font-light text-sm">Seleccione el número de comensales, la fecha y la hora deseada.</p>
                     
@@ -100,19 +95,41 @@
                     <div id="grid-cenas"   class="hidden grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-x-6 md:gap-y-6 mb-16 px-2 md:px-8"></div>
                 </div>
 
-                <!-- Datos del Cliente: Nombre y Email -->
-                <div class="flex flex-col md:flex-row justify-between items-start border-b border-[#eaddce] pb-10 mb-12 px-2 md:px-8 gap-8 animate-on-scroll" data-delay="0.5s">
-                    <div class="flex flex-col gap-1 w-full md:w-1/2">
+                <!-- Datos del Cliente: Nombre, Email y Teléfono -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 border-b border-[#eaddce] pb-10 mb-12 px-2 md:px-8 animate-on-scroll" data-delay="0.5s">
+                    <div class="flex flex-col gap-1 w-full">
                         <label for="nombre" class="text-[11px] tracking-widest uppercase font-bold text-gray-500 mb-2">Nombre</label>
                         <input type="text" id="nombre" maxlength="30" placeholder="Su nombre completo"
                                class="bg-transparent text-lg font-serif text-dark outline-none border-b border-gray-300 focus:border-primary pb-2 w-full transition-colors" />
                         <span id="error-nombre" class="text-red-500 text-xs mt-1 hidden"></span>
                     </div>
-                    <div class="flex flex-col gap-1 w-full md:w-1/2">
+                    <div class="flex flex-col gap-1 w-full">
                         <label for="email" class="text-[11px] tracking-widest uppercase font-bold text-gray-500 mb-2">Email</label>
                         <input type="email" id="email" maxlength="50" placeholder="su@email.com"
                                class="bg-transparent text-lg font-serif text-dark outline-none border-b border-gray-300 focus:border-primary pb-2 w-full transition-colors" />
                         <span id="error-email" class="text-red-500 text-xs mt-1 hidden"></span>
+                    </div>
+                    <div class="flex flex-col gap-1 w-full">
+                        <label for="telefono" class="text-[11px] tracking-widest uppercase font-bold text-gray-500 mb-2">Teléfono</label>
+                        <div class="flex items-center border-b border-gray-300 focus-within:border-primary pb-2 transition-colors duration-300">
+                            <select id="prefijo" class="bg-transparent text-lg font-serif text-dark outline-none cursor-pointer pr-1 mr-2 border-r border-gray-200">
+                                <option value="+34">🇪🇸 +34</option>
+                                <option value="+351">🇵🇹 +351</option>
+                                <option value="+33">🇫🇷 +33</option>
+                                <option value="+39">🇮🇹 +39</option>
+                                <option value="+44">🇬🇧 +44</option>
+                                <option value="+49">🇩🇪 +49</option>
+                                <option value="+1">🇺🇸 +1</option>
+                                <option value="+52">🇲🇽 +52</option>
+                                <option value="+57">🇨🇴 +57</option>
+                                <option value="+54">🇦🇷 +54</option>
+                                <option value="+56">🇨🇱 +56</option>
+                                <option value="+55">🇧🇷 +55</option>
+                            </select>
+                            <input type="tel" id="telefono" maxlength="15" placeholder="600 000 000"
+                                   class="bg-transparent text-lg font-serif text-dark outline-none w-full transition-colors" />
+                        </div>
+                        <span id="error-telefono" class="text-red-500 text-xs mt-1 hidden"></span>
                     </div>
                 </div>
 
