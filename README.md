@@ -75,3 +75,50 @@ Por último, para iniciar el servidor local, ejecuta:
 dotnet run
 ```
 La terminal te indicará la URL (usualmente `http://localhost:5000` o `https://localhost:5001`) donde podrás abrir y ver la web funcionando en tu navegador.
+
+---
+
+## 🐳 Ejecución con Docker (Recomendado)
+
+El proyecto incluye soporte completo para **Docker** y **Docker Compose**, lo que permite levantar tanto la aplicación web como la base de datos SQL Server de forma aislada y sin necesidad de instalar SQL Server localmente.
+
+### Requisitos Previos
+1. Tener [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y en ejecución en tu equipo.
+
+### Pasos para levantar el entorno:
+
+1. **Abrir la terminal** en la raíz del proyecto (`c:\Users\mikel\Desktop\Proyecto_Restaurante_Last-develop` donde se encuentra el archivo `docker-compose.yml`).
+2. **Construir y arrancar los contenedores**:
+   ```bash
+   docker compose up --build
+   ```
+   *Nota: Añade la bandera `-d` al final si prefieres que se ejecuten en segundo plano (liberando la consola): `docker compose up --build -d`.*
+
+3. **Acceder a la aplicación**:
+   Una vez completado el arranque, abre tu navegador e ingresa a:
+   👉 **[http://localhost:5000](http://localhost:5000)**
+
+### Características del entorno Docker:
+* **Base de datos automática**: El contenedor web aplicará automáticamente todas las migraciones de Entity Framework al iniciarse. Cuenta con un sistema de reintento en caso de que SQL Server tarde unos segundos de más en arrancar.
+* **Persistencia de Datos**: Los datos de la base de datos se guardan en un volumen local de Docker (`sqlserver_data`), por lo que no se perderán cuando apagues los contenedores.
+* **Conexión a Base de Datos desde SSMS (SQL Server Management Studio)**:
+  Puedes examinar y gestionar la base de datos del contenedor conectándote a:
+  - **Servidor (Server)**: `localhost` (o `127.0.0.1,1433`)
+  - **Autenticación (Authentication)**: `SQL Server Authentication`
+  - **Usuario (Login)**: `sa`
+  - **Contraseña (Password)**: `YourStrong!Passw0rd`
+
+### Comandos útiles de Docker Compose:
+* **Apagar los contenedores**:
+  ```bash
+  docker compose down
+  ```
+* **Apagar limpiando la base de datos** (borra el volumen para iniciar con una BD vacía):
+  ```bash
+  docker compose down -v
+  ```
+* **Ver logs en tiempo real**:
+  ```bash
+  docker compose logs -f
+  ```
+

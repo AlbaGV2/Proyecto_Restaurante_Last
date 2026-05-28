@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
           icon: 'error'
         });
       } finally {
-        btnLogin.textContent = 'Entrar y Confirmar';
+        btnLogin.textContent = 'Iniciar Sesión';
         btnLogin.disabled = false;
       }
     });
